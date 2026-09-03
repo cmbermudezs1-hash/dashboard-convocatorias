@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tablero de Convocatorias — FEIPU & ECH</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#F5F3EE;--sur:#FFF;--sur2:#EDEAE3;--brd:rgba(0,0,0,.08);--brds:rgba(0,0,0,.14);
+  --txt:#1A1915;--mut:#6B6860;--fnt:#A09D98;
+  --acc:#1C4F82;--accl:#E8F0F9;
+  --grn:#2D6A4F;--grnl:#D8F3DC;
+  --amb:#7B4F12;--ambl:#FFF3CD;
+  --red:#7D2020;--redl:#FDECEA;
+  --tel:#1A5F6A;--tell:#E0F4F5;
+  --pur:#4A2980;--purl:#EDE9F9;
+  --gry:#5A5850;--gryl:#EDEAE3;
+  --r:10px;--rs:6px;
+  --sh:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);
+  --fd:'DM Serif Display',Georgia,serif;
+  --fb:'DM Sans',system-ui,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--fb);background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5;min-height:100vh}
+.layout{display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sb{width:220px;flex-shrink:0;background:var(--txt);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100}
+.sb-logo{padding:24px 20px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sb-logo .org{font-family:var(--fd);font-size:17px;line-height:1.25}
+.sb-logo .sub{font-size:10px;color:rgba(255,255,255,.4);margin-top:4px;letter-spacing:.06em;text-transform:uppercase}
+.sb-nav{padding:12px 8px;flex:1}
+.nav-lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);padding:0 12px;margin:12px 0 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:var(--rs);cursor:pointer;color:rgba(255,255,255,.6);font-size:13px;border:none;background:none;width:100%;text-align:left;transition:all .15s}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-item.active{background:rgba(255,255,255,.13);color:#fff;font-weight:500}
+.nav-item svg{flex-shrink:0;opacity:.7}.nav-item.active svg{opacity:1}
+.sb-footer{padding:12px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:10px;color:rgba(255,255,255,.25)}
+
+/* MAIN */
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column}
+.topbar{background:var(--sur);border-bottom:1px solid var(--brd);padding:0 26px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-title{font-family:var(--fd);font-size:18px}
+.topbar-right{display:flex;gap:8px;align-items:center}
+.tag{font-size:11px;color:var(--fnt)}
+.content{padding:22px 26px;flex:1;overflow-y:auto;height:calc(100vh - 56px)}
+.pane{display:none}.pane.active{display:block}
+
+/* BTN */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--rs);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;font-family:var(--fb);border:none;white-space:nowrap}
+.btn-primary{background:var(--acc);color:#fff}.btn-primary:hover{background:#163D67}
+.btn-ghost{background:none;border:1px solid var(--brds);color:var(--mut)}.btn-ghost:hover{background:var(--sur2);color:var(--txt)}
+.btn-teal{background:var(--tel);color:#fff}.btn-teal:hover{background:#134954}
+.btn-sm{padding:5px 10px;font-size:11px}
+
+/* METRICS */
+.mg{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:11px;margin-bottom:18px}
+.mc{background:var(--sur);border:1px solid var(--brd);border-radius:var(--r);padding:15px 17px;box-shadow:var(--sh);position:relative;overflow:hidden;animation:fu .35s ease both}
+.mc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ca,var(--acc))}
+.mc-lbl{font-size:10px;color:var(--fnt);letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px}
+.mc-val{font-size:22px;font-weight:600;line-height:1}
+.mc-sub{font-size:10px;color:var(--fnt);margin-top:4px}
+
+/* CHARTS */
+.cg2{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px}
+.cg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px;margin-bottom:13px}
+.cc{background:var(--sur);border:1px solid var(--brd);border-radius:var(--r);padding:17px 19px;box-shadow:var(--sh);animation:fu .35s ease both}
+.cc.full{grid-column:1/-1}
+.cc-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.cc-sub{font-size:11px;color:var(--fnt);margin-bottom:12px}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.li{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--mut)}
+.ld{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* TABLE */
+.ts{background:var(--sur);border:1px solid var(--brd);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;animation:fu .35s ease both}
+.th{padding:14px 18px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.filters{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.fsel{padding:5px 9px;border:1px solid var(--brds);border-radius:var(--rs);font-size:12px;font-family:var(--fb);color:var(--txt);background:var(--sur);cursor:pointer;outline:none}
+.fsel:focus{border-color:var(--acc)}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{padding:8px 13px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--fnt);background:var(--bg);border-bottom:2px solid var(--brd);position:sticky;top:0;z-index:20;box-shadow:0 2px 4px rgba(0,0,0,.06);white-space:nowrap;cursor:pointer;user-select:none}
+thead th:hover{color:var(--mut)}.sorted{color:var(--acc)!important}
+tbody td{padding:8px 13px;border-bottom:1px solid var(--brd);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--bg)}
+.tf{padding:9px 13px;font-size:11px;color:var(--fnt);border-top:1px solid var(--brd)}
+
+/* BADGE */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500;white-space:nowrap}
+.b-grn{background:var(--grnl);color:var(--grn)}
+.b-blue{background:var(--accl);color:var(--acc)}
+.b-amb{background:var(--ambl);color:var(--amb)}
+.b-red{background:var(--redl);color:var(--red)}
+.b-tel{background:var(--tell);color:var(--tel)}
+.b-pur{background:var(--purl);color:var(--pur)}
+.b-gry{background:var(--gryl);color:var(--gry)}
+.b-blk{background:#E8E6E0;color:#1A1915;font-weight:600}
+.b-fucsia{background:#FCE4F1;color:#C71585;font-weight:600}
+
+/* DRAWER */
+.drw-ov{display:none;position:fixed;inset:0;z-index:200}
+.drw-ov.open{display:block}
+.drw-bg{position:absolute;inset:0;background:rgba(0,0,0,.22)}
+.drw{position:absolute;top:0;right:0;bottom:0;width:440px;background:var(--sur);box-shadow:-4px 0 24px rgba(0,0,0,.1);padding:24px;overflow-y:auto;animation:si .22s ease}
+.drw-close{position:absolute;top:16px;right:16px;background:none;border:none;cursor:pointer;color:var(--mut);font-size:18px}
+.drw h2{font-family:var(--fd);font-size:18px;margin-bottom:4px;padding-right:28px;line-height:1.3}
+.drw-meta{font-size:11px;color:var(--fnt);margin-bottom:16px}
+.drw-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--brd);font-size:12px;gap:12px}
+.drw-row:last-child{border-bottom:none}
+.drw-key{color:var(--mut);font-weight:500;flex-shrink:0;min-width:120px}
+.drw-val{text-align:right;color:var(--txt);font-weight:500;word-break:break-word}
+.drw-full{padding:8px 0;border-bottom:1px solid var(--brd);font-size:12px}
+.drw-full .drw-key{display:block;margin-bottom:3px}
+.drw-full .drw-val{text-align:left;font-weight:400;color:var(--mut);line-height:1.5}
+.drw-sec{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fnt);margin:14px 0 5px;padding-bottom:4px;border-bottom:1px solid var(--brd)}
+.drw-actions{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+
+/* NUEVO FORM */
+.ai-box{background:var(--accl);border:1px solid rgba(28,79,130,.2);border-radius:var(--r);padding:20px 22px;margin-bottom:20px}
+.ai-box h3{font-size:14px;font-weight:600;color:var(--acc);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.ai-box p{font-size:12px;color:var(--mut);margin-bottom:12px}
+.ai-input-row{display:flex;gap:8px;align-items:stretch}
+.ai-input{flex:1;padding:9px 13px;border:1px solid var(--brds);border-radius:var(--rs);font-size:13px;font-family:var(--fb);outline:none}
+.ai-input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(28,79,130,.09)}
+.ai-status{font-size:11px;color:var(--mut);margin-top:6px;min-height:16px}
+.ai-result{background:var(--sur);border:1px solid var(--brd);border-radius:var(--rs);padding:14px;margin-top:12px;display:none}
+.ai-result.show{display:block}
+.ai-field{margin-bottom:8px;font-size:12px}
+.ai-field label{font-weight:500;color:var(--mut);display:block;margin-bottom:2px;font-size:11px}
+.ai-field input,.ai-field select,.ai-field textarea{width:100%;padding:6px 10px;border:1px solid var(--brds);border-radius:var(--rs);font-size:12px;font-family:var(--fb);outline:none}
+.ai-field input:focus,.ai-field select:focus,.ai-field textarea:focus{border-color:var(--acc)}
+.ai-field textarea{resize:vertical;min-height:56px}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.sp2{grid-column:span 2}
+.form-card{background:var(--sur);border:1px solid var(--brd);border-radius:var(--r);padding:22px 24px;box-shadow:var(--sh)}
+.fsec{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fnt);margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--brd)}
+.f-msg{font-size:12px;margin-top:8px;min-height:16px}
+.msg-ok{color:var(--grn)}.msg-err{color:var(--red)}
+
+/* MISC */
+.empty{text-align:center;padding:40px 24px;color:var(--fnt);font-size:13px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(28,79,130,.2);border-top-color:var(--acc);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:4px}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes si{from{transform:translateX(36px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* PIPELINE VISUAL */
+.pipeline{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+.pipe-stage{flex:1;min-width:100px;background:var(--sur);border:1px solid var(--brd);border-radius:var(--r);padding:14px 16px;text-align:center;box-shadow:var(--sh)}
+.pipe-stage .num{font-size:26px;font-weight:600;color:var(--acc)}
+.pipe-stage .lbl{font-size:11px;color:var(--mut);margin-top:2px}
+.pipe-arrow{display:flex;align-items:center;color:var(--fnt);font-size:18px;padding-top:8px}
+
+@media(max-width:768px){
+  .sb{width:52px}
+  .sb-logo,.nav-lbl,.nav-item span,.sb-footer{display:none}
+  .main{margin-left:52px}
+  .content{padding:14px}
+  .cg2,.cg3{grid-template-columns:1fr}
+  .fg2,.fg3{grid-template-columns:1fr}
+  .sp2{grid-column:span 1}
+  .drw{width:100%}
+  .pipeline{flex-direction:column}
+  .pipe-arrow{display:none}
+}
+.inline-edit-row{display:none;background:#EDF3FC}
+.inline-edit-row.open{display:table-row}
+.inline-edit-row>td{padding:14px 18px;border-bottom:2px solid #C5D7EF}
+.ieg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.ief{display:flex;flex-direction:column;gap:4px}
+.ief label{font-size:11px;font-weight:700;color:#1C4F82;text-transform:uppercase;letter-spacing:.05em}
+.ief select,.ief input[type=date],.ief textarea,.ief input[type=text],.ief input[type=number]{padding:7px 10px;border:1px solid #B5CCE8;border-radius:6px;font-size:13px;font-family:inherit;background:#fff;outline:none;width:100%}
+.ief textarea{resize:vertical;min-height:60px}
+.ief.span3{grid-column:span 3}
+.ie-hist{margin-top:10px;padding-top:10px;border-top:1px solid #C5D7EF;font-size:13px;color:#6B6860;line-height:1.7}
+.ie-hist strong{color:#1C4F82}
+.ie-btns{display:flex;gap:8px;margin-top:10px;align-items:center}
+.ie-save{background:#2D6A4F;color:#fff;border:none;padding:7px 18px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
+.ie-save:hover{background:#1e4d38}
+.ie-cancel{background:none;border:1px solid #C5D7EF;color:#6B6860;padding:7px 14px;border-radius:6px;font-size:12px;cursor:pointer}
+
+#main-table { table-layout:fixed; width:100%; min-width:900px; }
+#main-table th { position:relative; overflow:visible; }
+.col-resizer { position:absolute; top:0; right:0; width:8px; height:100%; cursor:col-resize; user-select:none; z-index:25; border-right:2px solid #D0CEC8; }
+.col-resizer:hover { border-right:2px solid #1C4F82; background:rgba(28,79,130,.1); }
+.col-resizer.resizing { border-right:2px solid #1C4F82; background:rgba(28,79,130,.2); }
+#main-table th:nth-child(1), #main-table td:nth-child(1) { width:30%; white-space:normal; word-break:normal; max-height:6em; overflow:hidden; }
+#main-table th:nth-child(2), #main-table td:nth-child(2) { width:11%; white-space:normal; word-break:normal; }
+#main-table th:nth-child(3), #main-table td:nth-child(3) { width:9%; white-space:nowrap; }
+#main-table th:nth-child(4), #main-table td:nth-child(4) { width:13%; text-align:right; white-space:nowrap; }
+#main-table th:nth-child(5), #main-table td:nth-child(5) { width:5%; text-align:right; }
+#main-table th:nth-child(6), #main-table td:nth-child(6) { width:14%; }
+#main-table th:nth-child(7), #main-table td:nth-child(7) { width:12%; }
+#main-table th:nth-child(8), #main-table td:nth-child(8) { width:4%; text-align:center; }
+#main-table th:nth-child(9), #main-table td:nth-child(9) { width:3%; }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<aside class="sb">
+  <div class="sb-logo">
+    <div class="org">Convocatorias</div>
+    <div class="sub">Seguimiento FEIPU · ECH</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="nav-lbl">Vistas</div>
+    <button class="nav-item active" onclick="go('resumen')" id="nav-resumen">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Resumen</span>
+    </button>
+    <button class="nav-item" onclick="go('convocatorias')" id="nav-convocatorias">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span>Convocatorias</span>
+    </button>
+    <button class="nav-item" onclick="go('pipeline')" id="nav-pipeline">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span>Pipeline</span>
+    </button>
+    <div class="nav-lbl">Acciones</div>
+    <button class="nav-item" onclick="go('nueva')" id="nav-nueva">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      <span>+ Nueva</span>
+    </button>
+  </nav>
+  <div class="sb-footer">2026 · v1.0</div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-title" id="topbar-title">Resumen</div>
+    <div class="topbar-right">
+      <span class="tag" id="sync-status" style="margin-right:10px"></span><span class="tag" id="topbar-tag"></span>
+      <button class="btn btn-ghost btn-sm" onclick="recargar()" title="Recargar desde Excel">&#8635; Recargar</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV()">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        CSV
+      </button>
+      <button class="btn btn-primary btn-sm" onclick="go('nueva')">+ Nueva</button>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- RESUMEN -->
+    <div class="pane active" id="pane-resumen">
+      <div class="mg" id="metrics"></div>
+      <div class="cg2">
+        <div class="cc">
+          <div class="cc-title">Estado de convocatorias</div>
+          <div class="cc-sub">Distribución actual por estado</div>
+          <div class="legend" id="leg-estado"></div>
+          <div style="position:relative;height:180px"><canvas id="ch-estado"></canvas></div>
+        </div>
+        <div class="cc">
+          <div class="cc-title">Postulación</div>
+          <div class="cc-sub">¿Se postuló? ¿Quién está interesado?</div>
+          <div class="legend" id="leg-post"></div>
+          <div style="position:relative;height:180px"><canvas id="ch-post"></canvas></div>
+        </div>
+      </div>
+      <div class="cg2">
+        <div class="cc">
+          <div class="cc-title">Valor potencial por estado (COP)</div>
+          <div class="cc-sub">Millones COP, convocatorias con valor registrado</div>
+          <div style="position:relative;height:200px"><canvas id="ch-valor"></canvas></div>
+        </div>
+        <div class="cc">
+          <div class="cc-title">Responsable de identificación</div>
+          <div class="cc-sub">Quién encontró cada convocatoria</div>
+          <div style="position:relative;height:200px"><canvas id="ch-resp"></canvas></div>
+        </div>
+      </div>
+      <div class="cc full" style="margin-bottom:14px">
+        <div class="cc-title">Top 5 temas más consultados</div>
+        <div class="cc-sub">Por palabras clave de las convocatorias identificadas</div>
+        <div id="ch-temas-wrap" style="position:relative"><canvas id="ch-temas"></canvas></div>
+      </div>
+      <div class="cc full" style="margin-bottom:14px">
+        <div class="cc-title">Top 5 profesores con más convocatorias</div>
+        <div class="cc-sub">Número de convocatorias compartidas con cada docente</div>
+        <div id="ch-profes-wrap" style="position:relative"><canvas id="ch-profes"></canvas></div>
+      </div>
+    </div>
+
+    <!-- CONVOCATORIAS -->
+    <div class="pane" id="pane-convocatorias">
+      <div class="ts">
+        <div class="th">
+          <div style="font-size:14px;font-weight:600">Todas las convocatorias</div>
+          <div class="filters">
+            <input type="text" class="fsel" id="f-buscar" placeholder="Buscar título, fuente…" oninput="renderTable()" style="min-width:150px">
+            <select class="fsel" id="f-estado" onchange="renderTable()"><option value="">Estado</option></select>
+            <select class="fsel" id="f-post" onchange="renderTable()"><option value="">Estado de gestión UR</option><option>Aprobada</option><option>Desierta</option><option>En formulación</option><option>Enviada a la entidad</option><option>Enviada a profesores</option><option>Identificada</option><option>Rechazada</option><option>Sin respuesta de profesores</option></select>
+            <button class="btn btn-ghost btn-sm" onclick="clearF()">✕</button>
+          </div>
+        </div>
+        <div class="tw">
+          <table id="main-table">
+            <thead><tr>
+              <th onclick="sortBy('titulo')">Título <span id="s-titulo"></span></th>
+              <th onclick="sortBy('fuente')">Fuente <span id="s-fuente"></span></th>
+              <th onclick="sortBy('fecha_cierre')">Cierre <span id="s-fecha_cierre"></span></th>
+              <th onclick="sortBy('valor_pesos')" style="text-align:right">Valor COP <span id="s-valor_pesos"></span></th>
+              <th onclick="sortBy('match_ur')" style="text-align:right">Match <span id="s-match_ur"></span></th>
+              <th>Estado convocatoria</th>
+              <th>Estado de gestión UR</th>
+              <th>Ver</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="t-body"></tbody>
+          </table>
+        </div>
+        <div class="tf" id="t-footer"></div>
+      </div>
+    </div>
+
+    <!-- PIPELINE -->
+    <div class="pane" id="pane-pipeline">
+      <div class="pipeline" id="pipeline-stages"></div>
+      <div class="cg2" style="margin-bottom:14px">
+        <div class="cc">
+          <div class="cc-title">Convocatorias abiertas con alta compatibilidad</div>
+          <div class="cc-sub">Match UR ≥ 80, estado ABIERTA o PRÓXIMA</div>
+          <div class="tw" style="max-height:380px;overflow-y:auto">
+            <table><thead><tr><th>Título</th><th style="text-align:right">Match</th><th style="text-align:right">Valor COP</th><th>Cierre</th></tr></thead>
+            <tbody id="top-oport"></tbody></table>
+          </div>
+        </div>
+        <div class="cc">
+          <div class="cc-title">Convocatorias con seguimiento activo</div>
+          <div class="cc-sub">Tienen notas de seguimiento recientes</div>
+          <div class="tw" style="max-height:380px;overflow-y:auto">
+            <table><thead><tr><th>Título</th><th>Profes contactados</th><th>Estado</th></tr></thead>
+            <tbody id="top-seg"></tbody></table>
+          </div>
+        </div>
+      </div>
+      <div class="cc">
+        <div class="cc-title">Línea de tiempo — fechas de cierre próximas</div>
+        <div class="cc-sub">Convocatorias abiertas ordenadas por urgencia</div>
+        <div id="timeline"></div>
+      </div>
+    </div>
+
+    <!-- NUEVA -->
+    <div class="pane" id="pane-nueva">
+      <!-- AI SECTION -->
+      <div class="ai-box">
+        <h3>
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Analizar convocatoria desde URL
+        </h3>
+        <p>Pega el link de la convocatoria y Claude leerá la página para completar automáticamente los campos. Tú revisas y confirmas antes de guardar.</p>
+        <div class="ai-input-row">
+          <input type="text" class="ai-input" id="ai-url" placeholder="https://... pega aquí el link de la convocatoria">
+          <button class="btn btn-teal" onclick="analizarURL()" id="ai-btn">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+            Analizar
+          </button>
+        </div>
+        <div class="ai-status" id="ai-status"></div>
+        <div class="ai-result" id="ai-result">
+          <div style="font-size:12px;font-weight:600;color:var(--grn);margin-bottom:12px">✓ Información extraída — revisa y ajusta antes de guardar</div>
+          <div class="fg2">
+            <div class="ai-field sp2"><label>Título *</label><input type="text" id="f-titulo"></div>
+            <div class="ai-field"><label>Fuente / Entidad</label><input type="text" id="f-fuente"></div>
+            <div class="ai-field"><label>Moneda</label><select id="f-moneda"><option>COP</option><option>USD</option><option>EUR</option><option>GBP</option><option>CAD</option><option>LIB</option><option>Otro</option></select></div>
+            <div class="ai-field"><label>Monto original</label><input type="number" id="f-monto" placeholder="0"></div>
+            <div class="ai-field"><label>TRM</label><input type="number" id="f-trm" placeholder="0"></div>
+            <div class="ai-field"><label>Valor en pesos</label><input type="number" id="f-valor-pesos" placeholder="0"></div>
+            <div class="ai-field"><label>Fecha cierre</label><input type="date" id="f-cierre"></div>
+            <div class="ai-field"><label>Estado</label>
+              <select id="f-estado-new">
+                <option>ABIERTA</option><option>CERRADA</option><option>PERMANENTE</option>
+                <option>PRÓXIMA A ABRIR</option><option>PRÓXIMA A ABRIR</option>
+              </select>
+            </div>
+            <div class="ai-field"><label>Match UR (%)</label><input type="number" id="f-match" min="0" max="100" placeholder="0–100"></div>
+            <div class="ai-field"><label>Responsable identificación</label><input type="text" id="f-resp-new" placeholder="DDesarrollo, DIeI…"></div>
+            <div class="ai-field"><label>Estado de gestión UR</label>
+              <select id="f-post-new"><option value=""></option><option>Aprobada</option><option>Desierta</option><option>En formulación</option><option>Enviada a la entidad</option><option>Enviada a profesores</option><option>Identificada</option><option>Rechazada</option><option>Sin respuesta de profesores</option></select>
+            </div>
+            <div class="ai-field"><label>Fecha envío a profes</label><input type="date" id="f-fecha-envio"></div>
+            <div class="ai-field sp2"><label>Palabras clave</label><input type="text" id="f-keywords" placeholder="tema1, tema2, tema3…"></div>
+            <div class="ai-field sp2"><label>Profesores a quienes se envía (separados por coma)</label><input type="text" id="f-profesores" placeholder="Ej: Juan Pérez, María Gómez, Carlos Ruiz"></div>
+            <div class="ai-field sp2"><label>Descripción</label><textarea id="f-desc"></textarea></div>
+            <div class="ai-field sp2"><label>Seguimiento / Profes contactados</label><textarea id="f-seg" placeholder="Nombres de profes, fechas, respuestas…"></textarea></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px">
+            <button class="btn btn-primary" onclick="guardar()">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              Guardar convocatoria
+            </button>
+            <button class="btn btn-ghost" onclick="limpiarForm()">Limpiar</button>
+          </div>
+          <div class="f-msg" id="f-msg"></div>
+        </div>
+      </div>
+
+      <!-- MANUAL FORM -->
+      <div class="form-card">
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">O agregar manualmente</div>
+        <div style="font-size:12px;color:var(--mut);margin-bottom:14px">Si ya tienes los datos puedes completarlos directamente aquí</div>
+        <div class="fg2">
+          <div class="ai-field sp2"><label>Título *</label><input type="text" id="m-titulo" placeholder="Nombre de la convocatoria"></div>
+          <div class="ai-field"><label>Fuente / Entidad</label><input type="text" id="m-fuente"></div>
+          <div class="ai-field"><label>Moneda</label><select id="m-moneda"><option>COP</option><option>USD</option><option>EUR</option><option>GBP</option><option>CAD</option></select></div>
+          <div class="ai-field"><label>Monto original</label><input type="number" id="m-monto" placeholder="0"></div>
+          <div class="ai-field"><label>TRM</label><input type="number" id="m-trm" placeholder="0"></div>
+          <div class="ai-field"><label>Valor en pesos</label><input type="number" id="m-valor-pesos" placeholder="0"></div>
+          <div class="ai-field"><label>Fecha cierre</label><input type="date" id="m-cierre"></div>
+          <div class="ai-field"><label>Estado</label>
+            <select id="m-estado"><option>ABIERTA</option><option>CERRADA</option><option>PERMANENTE</option><option>PRÓXIMA A ABRIR</option></select>
+          </div>
+          <div class="ai-field"><label>Match UR (%)</label><input type="number" id="m-match" min="0" max="100"></div>
+          <div class="ai-field"><label>Responsable</label><input type="text" id="m-resp"></div>
+          <div class="ai-field"><label>Estado de gestión UR</label>
+            <select id="m-post"><option>No</option><option>Sí</option><option>Pendiente</option><option>Enviar profes</option></select>
+          </div>
+          <div class="ai-field"><label>Fecha envío</label><input type="date" id="m-fecha-envio"></div>
+          <div class="ai-field"><label>URL</label><input type="text" id="m-url" placeholder="https://…"></div>
+          <div class="ai-field"><label>Palabras clave</label><input type="text" id="m-keywords"></div>
+          <div class="ai-field sp2"><label>Descripción</label><textarea id="m-desc"></textarea></div>
+          <div class="ai-field sp2"><label>Seguimiento</label><textarea id="m-seg"></textarea></div>
+        </div>
+        <div style="margin-top:14px">
+          <button class="btn btn-primary" onclick="guardarManual()">Guardar</button>
+        </div>
+        <div class="f-msg" id="m-msg"></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+</div>
+
+<!-- DRAWER -->
+<div class="drw-ov" id="drw-ov">
+  <div class="drw-bg" onclick="closeDrw()"></div>
+  <div class="drw" id="drw-body"></div>
+</div>
+
+<script>
+// ═══ DATOS SEED ══════════════════════════════════════════════
+const SEED = [{"id": "C053", "num": "", "responsable": "", "periodo": "", "titulo": "(Sin título — Buenaventura)", "fuente": "Buenaventura", "moneda": "", "monto_original": 0, "trm": 0, "valor_pesos": 0.0, "fecha_cierre": "", "estado": "", "match_ur": 0, "url": "", "descripcion": "", "palabras_clave": "", "postulacion": "", "fecha_envio": "", "seguimiento": "", "profesores_enviado": "", "orden": 53}, {"id": "C052", "num": "", "responsable": "", "periodo": "", "titulo": "(Sin título — Alcaldía de Sesquile)", "fuente": "Alcaldía de Sesquile", "moneda": "", "monto_original": 0, "trm": 0, "valor_pesos": 0, "fecha_cierre": "", "estado": "", "match_ur": 0, "url": "", "descripcion": "", "palabras_clave": "", "postulacion": "", "fecha_envio": "", "seguimiento": "", "profesores_enviado": "", "orden": 52}, {"id": "C051", "num": "", "responsable": "DIeI", "periodo": "2026.0", "titulo": "International Interdisciplinary Research Projects 2027", "fuente": "The British Academy", "moneda": "GBP", "monto_original": 300000.0, "trm": 4295.0, "valor_pesos": 1288500000.0, "fecha_cierre": "2026-10-07", "estado": "ABIERTA", "match_ur": 0, "url": "", "descripcion": "Convocatoria para desarrollar nuevas investigaciones internacionales lideradas desde las humanidades y ciencias sociales sobre movilidad. Exige interdisciplinariedad e integración con disciplinas STEM. La Universidad del Rosario puede participar como institución aliada de una organización de investigación inglesa que actúe como solicitante principal. [Convocator...h Projects | Outlook]", "palabras_clave": "movilidad, migración, fronteras, movilidad humana, gobernanza ambiental, sostenibilidad, cambio climático, acción colectiva, movimientos sociales, innovación, tecnologías, humanidades digitales, políticas públicas, prosperidad, desigualdades, inteligencia anticipatoria, gobernanza resiliente [RV: Convoc...h Projects | Outlook], [Convocator...h Projects | Outlook]", "postulacion": "", "fecha_envio": "2026-07-14", "seguimiento": "Profesores sugeridos por Diana Marcela Gomez Tovar: Juan Thomas Ordóñez Roth, Francesca Ramos Pismataro, Mauricio Palma Gutiérrez, Simón Uribe Martínez, Matías Franchini, Javier Eduardo Revelo, Juan Carlos de León Guerrero y Oscar Javier Maldonado Castañeda. [RV: Convoc...h Projects | Outlook] / SE ENVÍA RECORDATORIO 31-8-26 /", "profesores_enviado": "", "orden": 51}, {"id": "C050", "num": "", "responsable": "panda", "periodo": "2026.0", "titulo": "17th Call for Funding Requests – International Fund for Cultural Diversity (IFCD) 2026", "fuente": "UNESCO – Fondo Internacional para la Diversidad Cultural (IFCD)", "moneda": "USD", "monto_original": 100000.0, "trm": 3135.0, "valor_pesos": 313500000.0, "fecha_cierre": "2026-05-06", "estado": "CERRADA", "match_ur": 80.0, "url": "", "descripcion": "Financia proyectos que contribuyan al desarrollo de sectores culturales y creativos inclusivos y sostenibles mediante fortalecimiento de políticas culturales, desarrollo de industrias culturales y creativas, fortalecimiento institucional, participación cultural, inclusión social y acceso a mercados culturales. Los proyectos deben generar cambios estructurales y sostenibles en los sectores culturales y creativos.", "palabras_clave": "Políticas culturales; industrias creativas; economía creativa; género; inclusión; pueblos indígenas; participación cultural; transformación digital; políticas públicas; fortalecimiento institucional; monitoreo y evaluación; desarrollo territorial; emprendimiento cultural; acceso a mercados culturales", "postulacion": "", "fecha_envio": "2026-08-31", "seguimiento": "Convocatoria cerrada. Revisar próxima apertura IFCD. Validar elegibilidad institucional de universidades para futuras convocatorias. Oportunidad relevante para docentes de políticas culturales, economía creativa, inclusión, género y desarrollo territorial.", "profesores_enviado": "", "orden": 50}, {"id": "C049", "num": "50.0", "responsable": "Fernando Carriazo", "periodo": "2026.0", "titulo": "Servicio de consultoría para la revisión y ajuste general en todas sus fases hasta la adopción del Plan Básico de Ordenamiento Territorial (PBOT) e incorporación de gestión de riesgo del Municipio de Pradera, Valle del Cauca", "fuente": "Pendiente", "moneda": "Pendiente", "monto_original": 3728670017.0, "trm": 0.0, "valor_pesos": 3728670017.0, "fecha_cierre": "2026-09-11", "estado": "ABIERTA", "match_ur": 90.0, "url": "", "descripcion": "Propender por un desarrollo integral del municipio, fundamentado en un modelo de gobierno abierto, transparente, moderno e innovador, que permita la armonía con la región, la  Articulación con la nación y las dinámicas mundiales, para la generación de paz, prosperidad y bienestar de sus habitantes.", "palabras_clave": "Plan de ordenamiento territorial", "postulacion": "En formulación", "fecha_envio": "2026-08-27", "seguimiento": "Fernando Carriazo (Envirométrika) se están identicficadon Hojas de vida y construcción de propuesta técnica y ppto 31-8-26 /", "profesores_enviado": "", "orden": 49}, {"id": "C048", "num": "49.0", "responsable": "Jurisprudencia", "periodo": "2026.0", "titulo": "Temas electorales", "fuente": "Hans Saidel", "moneda": "Pendiente", "monto_original": 0, "trm": 0, "valor_pesos": 0, "fecha_cierre": "", "estado": "", "match_ur": 0, "url": "", "descripcion": "Pendiente", "palabras_clave": "Pendiente", "postulacion": "En formulación", "fecha_envio": "", "seguimiento": "Yann Basset está en construcción de convocatoria con el equipo de Juris", "profesores_enviado": "", "orden": 48}, {"id": "C047", "num": "48.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Convocatoria Programa Regional para el Fortalecimiento de Capacidades Técnicas en Resiliencia Urbana y Reducción del Riesgo de Desastres", "fuente": "ONU-Habitat", "moneda": "USD", "monto_original": 50000.0, "trm": 3135.0, "valor_pesos": 156750000.0, "fecha_cierre": "2026-10-04", "estado": "ABIERTA", "match_ur": 95.0, "url": "", "descripcion": "Selección de una Institución de Educación Superior para ejecutar un programa regional de fortalecimiento de capacidades en resiliencia urbana y reducción del riesgo de desastres. Incluye diseño curricular, producción de contenidos, coordinación académica, gestión de plataforma, monitoreo y certificación. Modalidad 100 % virtual. Participación de personas de ocho países de América Latina. Ejecución prevista para 2027-2028. [RE: Miren...a nosotros | Outlook]", "palabras_clave": "resiliencia urbana; reducción del riesgo de desastres; fortalecimiento de capacidades; formación virtual; América Latina; monitoreo; certificación", "postulacion": "En formulación", "fecha_envio": "2026-08-28", "seguimiento": "María Helena y Patricia Acosta interesada /", "profesores_enviado": "", "orden": 47}, {"id": "C046", "num": "47.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Resilient Futures Call​", "fuente": "Better Politics Foundation", "moneda": "USD", "monto_original": 50000.0, "trm": 3114.0, "valor_pesos": 155700000.0, "fecha_cierre": "2026-09-04", "estado": "ABIERTA", "match_ur": 70.0, "url": "", "descripcion": "Apoyar iniciativas nuevas o en etapa temprana que fortalezcan el liderazgo político democrático y la capacidad de las instituciones para responder al cambio climático, promoviendo sociedades más resilientes", "palabras_clave": "Gobernanza climática y resiliencia\nLiderazgo político democrático\nPolíticas públicas frente al cambio climático\nGobernanza territorial y multinivel\nBiodiversidad y conservación\nAmazonia y ecosistemas críticos\nParticipación de pueblos indígenas y comunidades locales\nAdaptación al cambio climático\nTransición energética\nSeguridad alimentaria\nVivienda y transporte\nSalud y cambio climático\nInclusión y participación política\nConexión entre ciencia, evidencia y política pública", "postulacion": "", "fecha_envio": "2026-08-28", "seguimiento": "raul, fernando, mathias, silvia, yann, JCG / intención de postulación del OBS_AMA 31-8-26 /", "profesores_enviado": "", "orden": 46}, {"id": "C045", "num": "46.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Manifestación de interés para el fortalecimiento del sistema de monitoreo, seguimiento, resultados, reporting y preparación evaluativa del Programa Amazonía+", "fuente": "Agencia Italiana para la Cooperación", "moneda": "No especificado", "monto_original": 0, "trm": 0, "valor_pesos": 0, "fecha_cierre": "", "estado": "ABIERTA", "match_ur": 90.0, "url": "", "descripcion": "Manifestación de interés para identificar personas jurídicas con capacidad técnica para fortalecer el sistema de monitoreo, seguimiento de resultados, reporting y preparación evaluativa del Programa Amazonía+. Se trata de una fase de precalificación, no de una propuesta técnica o financiera.", "palabras_clave": "Monitoreo y evaluación (M&E); Gestión basada en resultados; Reporting; Amazonía; Cooperación internacional; Seguimiento de proyectos; Evaluación de programas; Gestión territorial y ambiental", "postulacion": "En formulación", "fecha_envio": "2026-08-28", "seguimiento": "Preparación de documentación institucional, experiencia técnica y firma de Anexo 1. Esperando versión preliminar de experiencia/capacidad técnica del Observatorio para radicación.", "profesores_enviado": "", "orden": 45}, {"id": "C044", "num": "44.0", "responsable": "Panda", "periodo": "2026.0", "titulo": "ANR France – Appel à Projets Générique 2026 (AAPG): Sciences Humaines et Sociales con Terrenos Internacionales", "fuente": "Agence Nationale de la Recherche (ANR) – Francia", "moneda": "EUR", "monto_original": 800000.0, "trm": 3628.0, "valor_pesos": 2902400000.0, "fecha_cierre": "2026-11-16", "estado": "PRÓXIMA A ABRIR", "match_ur": 79.0, "url": "", "descripcion": "La convocatoria BiodivFuture es lanzada por la Alianza Europea para la Biodiversidad en el marco de Horizonte Europa – Biodiversa+ . BiodivFuture, junto con una serie de acciones integradas en los programas emblemáticos de la Alianza , contribuirá a lograr uno de sus objetivos estratégicos: generar conocimiento aplicado, práctico y útil para impulsar un cambio transformador que permita detener y revertir el declive de la biodiversidad ( Agenda Estratégica de Investigación e Innovación de Biodiversa+ ).", "palabras_clave": "Funcionamiento de los nuevos ecosistemas\nHacia nuevos ecosistemas\nBeneficios de la biodiversidad y la equidad en el contexto de los nuevos ecosistemas", "postulacion": "", "fecha_envio": "2026-08-28", "seguimiento": "Fernando, Raul, Mathias, Leonardo", "profesores_enviado": "", "orden": 44}, {"id": "C043", "num": "43.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Subvenciones para el desarrollo de alianzas: Convocatoria de noviembre de 2026", "fuente": "Social Sciences and Humanities Research Council of Canada (SSHRC).", "moneda": "CAD", "monto_original": 250000.0, "trm": 2257.0, "valor_pesos": 564250000.0, "fecha_cierre": "2026-11-16", "estado": "ABIERTA", "match_ur": 0, "url": "", "descripcion": "Financiar durante 1 a 3 años el desarrollo de alianzas formales para investigación y actividades relacionadas en ciencias sociales y humanidades. Busca, entre otras cosas, crear nuevas alianzas, fortalecer alianzas existentes, desarrollar modelos de colaboración y redes de investigación que puedan escalarse a nivel regional, nacional o internacional.", "palabras_clave": "Historia e historia política.\nRelaciones internacionales.\nDemocracia y gobernanza.\nConflicto, paz y reconciliación.\nEstudios territoriales.\nMigraciones.\nEstudios de género.\nDerechos humanos.\nMemoria histórica.\nEstudios ambientales desde las ciencias sociales.\nPatrimonio y cultura.\nHumanidades digitales, siempre que el objetivo principal sea investigación y no simplemente digitalizar una colección.\nRedes internacionales de investigación.\nCo-creación de conocimiento con entidades públicas, privadas o sociales.", "postulacion": "", "fecha_envio": "2026-08-18", "seguimiento": "Se envía a todos los profesores, condición de inv principal de U canadiense", "profesores_enviado": "", "orden": 43}, {"id": "C042", "num": "42.0", "responsable": "linkedIn", "periodo": "2026.0", "titulo": "Curso de profesionalización docente para Educadores no Licenciados y Curso de actualización pedagógica para Licenciados.", "fuente": "Enseña por Colombia", "moneda": "COP", "monto_original": 190000000.0, "trm": 0.0, "valor_pesos": 190000000.0, "fecha_cierre": "2026-08-25", "estado": "CERRADA", "match_ur": 87.0, "url": "", "descripcion": "Estamos buscando una Institución de Educación Superior acreditada, que ofrezca dos programas formativos: un Curso de Profesionalización Docente de 480 horas para profesionales no licenciados, que debe cumplir con los requisitos de los Decretos 1278 de 2002 y 2035 de 2005; y un Curso de Actualización Pedagógica de 144 horas para profesionales licenciados. Ambos programas se desarrollarán en módulos, con la realización de dos módulos en 2026 y uno o dos módulos en 2027, con el objetivo de entregar la certificación correspondiente a los profesionales no licenciados y licenciados que cumplan con la totalidad del programa y sus requisitos", "palabras_clave": "Pedagogía", "postulacion": "No", "fecha_envio": "2026-08-18", "seguimiento": "Wilson Herrera /  lilian Robayo / Beita Aguilar, Carlos Patarroyo / Eduard Barbosa enviada invitación 18-8-26/", "profesores_enviado": "", "orden": 42}, {"id": "C041", "num": "41.0", "responsable": "Ddllo", "periodo": "2026.0", "titulo": "Evaluación de resultados - Proyecto CRECE Colombia", "fuente": "Metlife/Trickleup", "moneda": "COP", "monto_original": 0.0, "trm": 0.0, "valor_pesos": 0.0, "fecha_cierre": "2026-09-15", "estado": "ABIERTA", "match_ur": 80.0, "url": "", "descripcion": "analizar los cambios alcanzados por las participantes en las principales áreas de intervención del programa, identificar factores que facilitaron o limitaron los resultados obtenidos y generar recomendaciones orientadas a fortalecer futuras intervenciones de inclusión económica y reducción de la pobreza.", "palabras_clave": "Evaluación de resultados\nEvaluación externa\nMonitoreo y evaluación (M&E / MEL)\nInvestigación aplicada", "postulacion": "Enviada a profes", "fecha_envio": "2026-08-12", "seguimiento": "Se envía a todos los profesores, no hay valor de ppto, sino al mejor oferente según TdR 12-8-26 /", "profesores_enviado": "", "orden": 41}, {"id": "C040", "num": "40.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Subvenciones iniciales para pequeñas iniciativas de Global Voices for Peace", "fuente": "AFSC", "moneda": "USD", "monto_original": 15000.0, "trm": 3436.0, "valor_pesos": 51540000.0, "fecha_cierre": "2026-09-15", "estado": "ABIERTA", "match_ur": 90.0, "url": "", "descripcion": "reforzar los sistemas abiertos y participativos, fortalecer las instituciones democráticas y mejorar la calidad de la democracia. Buscamos facilitar la creación de relaciones entre redes religiosas, de la sociedad civil, humanitarias, de consolidación de la paz y de organización para fortalecer la protección colectiva y la acción coordinada", "palabras_clave": "Organización y divulgación comunitaria\nIniciativas de diálogo y consolidación de la paz\nTalleres, sesiones de capacitación y educación comunitaria.\nProgramas piloto e iniciativas innovadoras de base.\nInvestigación o documentación a pequeña escala\nActualizar investigaciones o análisis existentes (a pequeña escala).", "postulacion": "Enviada a profes", "fecha_envio": "2026-08-12", "seguimiento": "Carlos Miguel, Oscar Maldonado,  Juan Carlos Guerrero, Yann Basset, Carolina Galindo,  Carlos Patarroyo, Karen Cerón se envió el 12 de agosto de 2026", "profesores_enviado": "", "orden": 40}, {"id": "C039", "num": "39.0", "responsable": "DIEI", "periodo": "2026.0", "titulo": "SVRI Data to Evidence Grant 2027: Knowledge for Action to End Violence Against Women and Child Sexual Violence", "fuente": "SVIR", "moneda": "USD", "monto_original": 50000.0, "trm": 3198.0, "valor_pesos": 159900000.0, "fecha_cierre": "", "estado": "CERRADA", "match_ur": 60.0, "url": "", "descripcion": "financiar a personas investigadoras con sede en países de ingresos bajos o medios (PIBM) para que realicen análisis secundarios de datos específicos, con el fin de generar evidencia relevante para las políticas sobre la violencia contra las mujeres (VCM) y la violencia sexual infantil (VSI)\"", "palabras_clave": "Violencia de género o infantil", "postulacion": "Enviada a profes", "fecha_envio": "2026-08-12", "seguimiento": "Laura, María Catalina, Adriana Serrano, Ana se envía correo personalizado 6-8-26 /  María Catalina Desistió de participar por condiciones en los TdR 11-8-26 /", "profesores_enviado": "", "orden": 39}, {"id": "C038", "num": "38.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Convocatoria de propuestas: Subvención del FIDA para la implementación de la iniciativa \"Aprovechamiento de la evaluación del desempeño del sector rural del FIDA para la formulación de políticas y la inversión", "fuente": "IFAS", "moneda": "USD", "monto_original": 1200000.0, "trm": 3142.0, "valor_pesos": 3770400000.0, "fecha_cierre": "2026-09-04", "estado": "ABIERTA", "match_ur": 90.0, "url": "", "descripcion": "Seleccionar una organización o consorcio para implementar una iniciativa orientada a fortalecer la evaluación del desempeño del sector rural y generar evidencia para mejorar las políticas públicas y las decisiones de inversión en desarrollo rural.", "palabras_clave": "Evaluación del desempeño del sector rural.\nPolíticas públicas rurales.\nInversión y financiamiento para el desarrollo rural.\nGobernanza y fortalecimiento institucional.\nGeneración y uso de evidencia para la toma de decisiones.\nDesarrollo territorial y reducción de pobreza rural.", "postulacion": "Enviada a profes", "fecha_envio": "2026-08-04", "seguimiento": "", "profesores_enviado": "", "orden": 38}, {"id": "C037", "num": "37.0", "responsable": "DIeI", "periodo": "2026.0", "titulo": "The Impacts of Regulation in Latin America and the Caribbean  - IDB", "fuente": "BID", "moneda": "USD", "monto_original": 25000.0, "trm": 3157.0, "valor_pesos": 78925000.0, "fecha_cierre": "2026-08-16", "estado": "CERRADA", "match_ur": 70.0, "url": "", "descripcion": "financiar artículos empíricos que estimen los efectos causales, tanto directos como indirectos, de los cambios regulatorios sobre la actividad económica, incluyendo la creación de empresas, la productividad, el uso de insumos, el empleo, los precios, la informalidad y la concentración del mercado.", "palabras_clave": "estudiar los efectos de las innovaciones digitales sobre los costos de cumplimiento y de aplicación de la normativa, la forma en que las nuevas tecnologías transforman los mercados existentes y sus implicaciones para la demanda de regulación.", "postulacion": "Sí", "fecha_envio": "", "seguimiento": "Primer encuentro María Helena, Greinfieth y Equipo de Economía / se postularon con Juris 16-08-26 /", "profesores_enviado": "", "orden": 37}, {"id": "C036", "num": "36.0", "responsable": "DIeI", "periodo": "2026.0", "titulo": "General Research Grants", "fuente": "Fundación Gerda Henkel", "moneda": "EUR", "monto_original": 160000.0, "trm": 3659.0, "valor_pesos": 585440000.0, "fecha_cierre": "2026-11-20", "estado": "ABIERTA", "match_ur": 95.0, "url": "", "descripcion": "Dentro del Programa General de Financiación de la Investigación de la Fundación Gerda Henkel, la atención se centra en las Humanidades Históricas, en particular en la Arqueología, la Historia, los Estudios Islámicos Históricos, la Historia del Arte, la Historia del Derecho, la Prehistoria y la Historia Antigua, y la Historia de la Ciencia.", "palabras_clave": "Arqueología\nHistoria del arte\nEstudios históricos islámicos\nHistoria\nHistoria de la ciencia\nHistoria del Derecho\nPrehistoria e historia temprana\nEstudios del patrimonio\nInvestigación en la historia de la arquitectura", "postulacion": "No", "fecha_envio": "", "seguimiento": "Reunión programada 3-ago con Adriana Alzate, Andres Jiméenez, Sven Shuster, Sebastian Vargas - después de reuniones con DIeI se presentarán Andrés Jiménez y Juan Carlos Ruiz 4-8-26 / Interés de JCR y está en la construcción de la propuesta técnica 11-8-26 /", "profesores_enviado": "", "orden": 36}, {"id": "C035", "num": "35.0", "responsable": "DIeI", "periodo": "2026.0", "titulo": "Imminent Research Grants 2026 — Translated Research Center", "fuente": "Translated's Research Center", "moneda": "USD", "monto_original": 20000.0, "trm": 3700.0, "valor_pesos": 74000000.0, "fecha_cierre": "2026-10-16", "estado": "ABIERTA", "match_ur": 90.0, "url": "", "descripcion": "financiar cinco proyectos de investigación originales que exploren las fronteras más avanzadas en el mundo de los servicios lingüísticos\"", "palabras_clave": "Language Economics\nLanguage Data\nHuman Computer Interaction\nNeuroscience of language\nMachine learning algorithms for translation", "postulacion": "No", "fecha_envio": "", "seguimiento": "Sí, reunión el 3 de agosto con Camilo Sarmiento y con Christian Cardenas y Laura Rojas DieI para conocer TdR /", "profesores_enviado": "", "orden": 35}, {"id": "C034", "num": "34.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Call for Research Proposals on Housing in Latin America and the Caribbean", "fuente": "CAF", "moneda": "USD", "monto_original": 730000.0, "trm": 3602.0, "valor_pesos": 2629460000.0, "fecha_cierre": "2026-03-08", "estado": "CERRADA", "match_ur": 90.0, "url": "", "descripcion": "Financiar investigaciones que generen evidencia empírica original y rigurosa sobre los mercados de vivienda y las políticas de vivienda en América Latina y el Caribe, con especial interés en aportar evidencia útil para el diseño de políticas públicas que mejoren el acceso a vivienda para familias de bajos ingresos.", "palabras_clave": "Eje 1 — Investigación general sobre vivienda\nEje 2 — Evaluación de programas de vivienda", "postulacion": "No", "fecha_envio": "", "seguimiento": "Nadie Interesado", "profesores_enviado": "", "orden": 34}, {"id": "C033", "num": "32.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Après-Guerres: Refaire Sociétés", "fuente": "Apress (Francia)", "moneda": "USD", "monto_original": 15000.0, "trm": 4297.0, "valor_pesos": 64455000.0, "fecha_cierre": "2026-09-14", "estado": "ABIERTA", "match_ur": 80.0, "url": "", "descripcion": "Explorar las transiciones entre guerras y paz donde se redistribuyen poderes, legitimidades y relaciones políticas, económicas y sociales. Apoya investigaciones sobre contextos de posguerra en el siglo XXI con énfasis en la construcción de la “paz desde abajo” y el papel de movimientos ciudadanos, actores culturales, sociales, mediáticos y diásporas en la reconstrucción del tejido social.", "palabras_clave": "Formas de participación ciudadana y co-construcción con instituciones\n\n \nRol de organizaciones internacionales y actores no estatales en procesos de posguerra\n\n \nReconstrucción institucional y democrática: dimensiones sociales, psicológicas y patrimoniales\n\n \nDinámicas informacionales, narrativas colectivas y construcción del relato en contextos de posguerra", "postulacion": "No", "fecha_envio": "", "seguimiento": "Nadie Interesado", "profesores_enviado": "", "orden": 33}, {"id": "C032", "num": "31.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Digital Resiliency Grants", "fuente": "Civicus", "moneda": "COP", "monto_original": 0, "trm": 0.0, "valor_pesos": 0.0, "fecha_cierre": "", "estado": "PERMANENTE", "match_ur": 80.0, "url": "", "descripcion": "Ofrecer subvenciones de respuesta rápida para fortalecer la resiliencia digital de actores locales de la sociedad civil que enfrentan restricciones inminentes del espacio cívico, amenazas digitales o barreras que limitan su capacidad de operar. Alianza entre el CIVICUS Crisis Response Fund (CRF) y el Digital Democracy Initiative (DDI).", "palabras_clave": "Seguridad y resiliencia digital para organizaciones cívicas y activistas\n\n \nProtección frente a vigilancia, desinformación y censura digital\n\n \nDemocracia digital y participación ciudadana en entornos digitales\n\n \nDerechos digitales y libertad en línea\n\n \nFortalecimiento tecnológico de la sociedad civil en contextos de riesgo", "postulacion": "No", "fecha_envio": "", "seguimiento": "Nadie Interesado", "profesores_enviado": "", "orden": 32}, {"id": "C031", "num": "30.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Global Impact Cash Grants", "fuente": "CISCO", "moneda": "USD", "monto_original": 100000.0, "trm": 3700.0, "valor_pesos": 370000000.0, "fecha_cierre": "", "estado": "PERMANENTE", "match_ur": 50.0, "url": "", "descripcion": "Identificar, incubar y desarrollar soluciones innovadoras en etapas tempranas con el mayor potencial de impacto social. Los recursos se destinan a ONG/NPO que aborden problemas sociales significativos usando tecnología para mejorar el alcance y la eficiencia de sus servicios a poblaciones vulnerables.", "palabras_clave": "Educación — apoyo a estudiantes, docentes e instituciones\n\n \nEmpoderamiento económico — habilidades, emprendimiento y servicios financieros\n\n \nRespuesta a crisis y ayuda humanitaria — alimentación, vivienda, conectividad\n\n \nResiliencia climática — agricultura regenerativa, energía limpia y educación ambiental", "postulacion": "No", "fecha_envio": "", "seguimiento": "OBS AMAZONÍA, RAUL, OSCAR,", "profesores_enviado": "", "orden": 31}, {"id": "C030", "num": "29.0", "responsable": "LinkedIn", "periodo": "2026.0", "titulo": "Licitación  No. 10037929", "fuente": "GIZ", "moneda": "COP", "monto_original": 0, "trm": 0.0, "valor_pesos": 0.0, "fecha_cierre": "2026-08-05", "estado": "CERRADA", "match_ur": 90.0, "url": "", "descripcion": "Buscamos una consultoría que contribuya al fortalecimiento de los enfoques de género e interseccionalidad en los proyectos de infraestructura vial desarrollados por la Agencia Nacional de Infraestructura (ANI).", "palabras_clave": "Cambio climático\nBiodiversidad\nGobernanza climática\nPolítica ambiental\nDesarrollo territorial", "postulacion": "No", "fecha_envio": "2026-07-21", "seguimiento": "Se envía correo a Laura Ordoñez, Claudia Cortés, Flora Rodríguez 21 de julio, recordatorio el 28 de julio con modelo de ejemplo 28-7-26 / ,desierta", "profesores_enviado": "", "orden": 30}, {"id": "C029", "num": "28.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Premio Alsea 2026 para Investigación en Salud y Nutrición", "fuente": "Fundación Alsea", "moneda": "EUR", "monto_original": 150000.0, "trm": 3602.0, "valor_pesos": 540300000.0, "fecha_cierre": "2026-06-24", "estado": "CERRADA", "match_ur": 60.0, "url": "", "descripcion": "Promover proyectos de investigación innovadores y originales que generen beneficios directos en\npoblaciones vulnerables, impulsen la sostenibilidad y sustentabilidad alimentaria y nutricional, para\ncontribuir al desarrollo de políticas públicas de alto impacto, en línea con los Objetivos de Desarrollo\nSostenible de las Naciones Unidas, con énfasis en los ODS 2, 3, 12 y 1", "palabras_clave": "sostenibilidad y sustentabilidad alimentaria y nutricional", "postulacion": "No", "fecha_envio": "", "seguimiento": "Nadie Interesado (Patricia Acosta señaló revisar la convocatoria|No envió respuesta)", "profesores_enviado": "", "orden": 29}, {"id": "C028", "num": "27.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Convocatoria Para El Financiamiento De Proyectos De Desarrollo Perú - Colombia", "fuente": "BID", "moneda": "USD", "monto_original": 1000000.0, "trm": 3602.0, "valor_pesos": 3602000000.0, "fecha_cierre": "2026-06-23", "estado": "CERRADA", "match_ur": 90.0, "url": "", "descripcion": "objetivo financiar proyectos que contribuyan a la consolidación de los procesos de integración binacional, al desarrollo humano sostenible y a la mejora de la calidad de vida de las poblaciones ubicadas en la Zona de Integración Fronteriza entre Perú y Colombia.", "palabras_clave": "Desarrollo social / Desarrollo económico", "postulacion": "No", "fecha_envio": "", "seguimiento": "Nadie Interesado", "profesores_enviado": "", "orden": 28}, {"id": "C027", "num": "26.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "The LEGO Foundation Fellowship 2026–2029", "fuente": "Lego Foundation", "moneda": "USD", "monto_original": 300000.0, "trm": 3602.0, "valor_pesos": 1080600000.0, "fecha_cierre": "2026-07-31", "estado": "CERRADA", "match_ur": 80.0, "url": "", "descripcion": "trabajos ambiciosos, rigurosos y de relevancia práctica. Buscamos becarios con un gran potencial investigador, ideas claras para la siguiente etapa de su trabajo y un compromiso con la generación de evidencia que sirva de base para acciones en favor de la infancia.", "palabras_clave": "infancia temprana en contextos de crisis y conflicto; la inclusión y el bienestar de los niños neurodivergentes; y el aprendizaje y desarrollo infantil en un mundo impulsado por la IA", "postulacion": "No", "fecha_envio": "", "seguimiento": "Posiblemente Mathew Charles pendiente que Silvia confirme quién será el profesor de carrera que ejecute el liderazgo del proyecto y que cumpla con el requisito del doctorado de 10 años de antigüedad 27-7-26 /", "profesores_enviado": "", "orden": 27}, {"id": "C026", "num": "25.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Darwin Initiative Round 32", "fuente": "Darwin Foundation", "moneda": "LIB", "monto_original": 1000000.0, "trm": 4377.0, "valor_pesos": 4377000000.0, "fecha_cierre": "2026-07-20", "estado": "CERRADA", "match_ur": 60.0, "url": "", "descripcion": "están destinadas a proyectos centrados en el desarrollo de las capacidades de organizaciones locales y nacionales identificadas (sociedad civil, institutos de investigación y organismos públicos) para llevar a cabo de manera eficiente proyectos eficaces y exitosos de conservación de la biodiversidad y reducción de la pobreza. Los proyectos deben tener una duración máxima de entre 1 y 3 años.", "palabras_clave": "Medio ambiente, conservación biodiversidad, reducción pobreza", "postulacion": "No", "fecha_envio": "", "seguimiento": "REVISAR CONVOCATORIA INDIVIDUAL", "profesores_enviado": "", "orden": 26}, {"id": "C025", "num": "25.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Iniciativa Darwin de Capacidades y Habilidades .", "fuente": "Darwin Foundation", "moneda": "LIB", "monto_original": 1000000.0, "trm": 4377.0, "valor_pesos": 4377000000.0, "fecha_cierre": "2026-07-20", "estado": "CERRADA", "match_ur": 60.0, "url": "", "descripcion": "están destinadas a proyectos centrados en el desarrollo de las capacidades de organizaciones locales y nacionales identificadas (sociedad civil, institutos de investigación y organismos públicos) para llevar a cabo de manera eficiente proyectos eficaces y exitosos de conservación de la biodiversidad y reducción de la pobreza. Los proyectos deben tener una duración máxima de entre 1 y 3 años.", "palabras_clave": "Medio ambiente, conservación biodiversidad, reducción pobreza", "postulacion": "No", "fecha_envio": "", "seguimiento": "REVISAR CONVOCATORIA INDIVIDUAL", "profesores_enviado": "", "orden": 25}, {"id": "C024", "num": "25.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Darwin Initiative Round 32", "fuente": "Darwin Foundation", "moneda": "LIB", "monto_original": 1000000.0, "trm": 4377.0, "valor_pesos": 4377000000.0, "fecha_cierre": "2026-07-20", "estado": "CERRADA", "match_ur": 60.0, "url": "", "descripcion": "están destinadas a proyectos centrados en el desarrollo de las capacidades de organizaciones locales y nacionales identificadas (sociedad civil, institutos de investigación y organismos públicos) para llevar a cabo de manera eficiente proyectos eficaces y exitosos de conservación de la biodiversidad y reducción de la pobreza. Los proyectos deben tener una duración máxima de entre 1 y 3 años.", "palabras_clave": "Medio ambiente, conservación biodiversidad, reducción pobreza", "postulacion": "No", "fecha_envio": "", "seguimiento": "REVISAR CONVOCATORIA INDIVIDUAL", "profesores_enviado": "", "orden": 24}, {"id": "C023", "num": "24.0", "responsable": "UA", "periodo": "2026.0", "titulo": "Religion, Science, & Society seeks proposals that address fundamental questions about human existence, how people can flourish and find meaning, and how societies envision the future.", "fuente": "Templeton Foundation", "moneda": "USD", "monto_original": 36000.0, "trm": 3275.0, "valor_pesos": 117900000.0, "fecha_cierre": "2026-07-15", "estado": "CERRADA", "match_ur": 90.0, "url": "", "descripcion": "", "palabras_clave": "Religión, paz, sociedades", "postulacion": "Sí", "fecha_envio": "", "seguimiento": "Postulados  Carlos Miguel Gomez y Hector García", "profesores_enviado": "", "orden": 23}, {"id": "C022", "num": "23.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Senesh Fellowship - IPRA Foundation", "fuente": "IPRA Foundation", "moneda": "USD", "monto_original": 5000.0, "trm": 3275.0, "valor_pesos": 16375000.0, "fecha_cierre": "2027-01-01", "estado": "PRÓXIMA A ABRIR", "match_ur": 75.0, "url": "", "descripcion": "Beca de investigación para estudios de paz, reabre sus aplicaciones el 1 de octubre de 2026. Enfocada en proyectos que contribuyan al avance del conocimiento en la resolución de conflictos y la construcción de paz.", "palabras_clave": "Paz, Investigación, Conflicto, Justicia Transicional, América Latina", "postulacion": "No", "fecha_envio": "", "seguimiento": "Oscar Palma, Karen Cerón enviado @ 27-7-26 manifiesta interés estar pendiente en septiembre si ya salieron TdR 28-7-26 /", "profesores_enviado": "", "orden": 22}, {"id": "C021", "num": "21.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Institutional Grants - Conservation, Food & Health Foundation", "fuente": "Conservation, Food & Health Foundation", "moneda": "USD", "monto_original": 50000.0, "trm": 3275.0, "valor_pesos": 163750000.0, "fecha_cierre": "2026-12-22", "estado": "PRÓXIMA A ABRIR", "match_ur": 88.0, "url": "", "descripcion": "Apoya proyectos que promueven la conservación ambiental, la seguridad alimentaria y la salud pública en países en desarrollo, a través de un sistema de aplicación en dos fases. Prioriza iniciativas con impacto significativo y sostenible en comunidades vulnerables.", "palabras_clave": "Conservación, Salud Pública, Seguridad Alimentaria, Desarrollo Sostenible, América Latina", "postulacion": "No", "fecha_envio": "", "seguimiento": "Enviar correo a Armando, Fdo, Palma y Franchini 29-7-26 /", "profesores_enviado": "", "orden": 21}, {"id": "C020", "num": "20.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Explorers Club Impact Grants", "fuente": "The Explorers Club", "moneda": "USD", "monto_original": 25000.0, "trm": 3275.0, "valor_pesos": 81875000.0, "fecha_cierre": "", "estado": "PERMANENTE", "match_ur": 80.0, "url": "", "descripcion": "Ofrece subvenciones para proyectos de exploración científica en diversas disciplinas, incluyendo ciencias biológicas, arqueología y ecología, con un enfoque en trabajo de campo y aventura con propósito. Busca expandir el impacto del trabajo científico y de exploración globalmente.", "palabras_clave": "Exploración, Ciencias Ambientales, Ecología, Antropología, Trabajo de Campo", "postulacion": "No", "fecha_envio": "2026-08-27", "seguimiento": "Hector", "profesores_enviado": "", "orden": 20}, {"id": "C019", "num": "19.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Convocatoria de subvenciones para acciones y proyectos de cooperación técnica avanzada en materia de memoria, construcción de paz y resolución de conflictos (Programa Democracia)", "fuente": "AECID", "moneda": "EUR", "monto_original": 88056.0, "trm": 3718.0, "valor_pesos": 327392208.0, "fecha_cierre": "2026-06-30", "estado": "CERRADA", "match_ur": 90.0, "url": "", "descripcion": "Financiación de proyectos de transferencia de conocimiento especializado en memoria histórica y democrática, construcción de paz, convivencia, reconciliación y resolución de conflictos en América Latina y el Caribe.", "palabras_clave": "paz, memoria, derechos humanos, América Latina, AECID", "postulacion": "No", "fecha_envio": "", "seguimiento": "Nadie Interesado", "profesores_enviado": "", "orden": 19}, {"id": "C018", "num": "18.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Climate Change and Press Freedom Fellowship 2026", "fuente": "Committee to Protect Journalists (CPJ)", "moneda": "USD", "monto_original": 75400.0, "trm": 3275.0, "valor_pesos": 246935000.0, "fecha_cierre": "2026-03-30", "estado": "CERRADA", "match_ur": 80.0, "url": "", "descripcion": "Beca de un año para profesionales que trabajan en la protección de periodistas que cubren el cambio climático y temas ambientales.", "palabras_clave": "periodismo, cambio climático, libertad de prensa, beca, investigación", "postulacion": "No", "fecha_envio": "", "seguimiento": "Nadie Interesado", "profesores_enviado": "", "orden": 18}, {"id": "C017", "num": "15.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "IPYS y AECID convocan becas de investigación para América Latina", "fuente": "Instituto Prensa y Sociedad - IPYS", "moneda": "EUR", "monto_original": 2000.0, "trm": 3718.0, "valor_pesos": 7436000.0, "fecha_cierre": "2026-09-30", "estado": "ABIERTA", "match_ur": 85.0, "url": "", "descripcion": "Becas para periodistas de investigación en América Latina para desarrollar proyectos sobre problemáticas de interés público, con énfasis en libertad de expresión y prensa.", "palabras_clave": "periodismo de investigación, libertad de prensa, América Latina, AECID, periodistas", "postulacion": "No", "fecha_envio": "", "seguimiento": "Nadie Interesado", "profesores_enviado": "", "orden": 17}, {"id": "C016", "num": "14.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "NED abre convocatoria global de subvenciones 2026 para proyectos en democracia y derechos humanos", "fuente": "NED", "moneda": "USD", "monto_original": 0, "trm": 0.0, "valor_pesos": 0.0, "fecha_cierre": "2026-06-02", "estado": "CERRADA", "match_ur": 90.0, "url": "", "descripcion": "La National Endowment for Democracy (NED) financia proyectos de organizaciones sociales, medios independientes y colectivos ciudadanos enfocados en derechos humanos, fortalecimiento democrático y libertad de prensa.", "palabras_clave": "democracia, derechos humanos, libertad de prensa, ONGs, sociedad civil", "postulacion": "Sí", "fecha_envio": "", "seguimiento": "Se presentaron desde el Observatorio de Venezuela", "profesores_enviado": "", "orden": 16}, {"id": "C015", "num": "13.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "FONDO PARA LA INVESTIGACIÓN - FUNDACIÓN WWB COLOMBIA 2026", "fuente": "Fundación WWB Colombia", "moneda": "COP", "monto_original": 67000000.0, "trm": 0.0, "valor_pesos": 67000000.0, "fecha_cierre": "2026-05-31", "estado": "CERRADA", "match_ur": 80.0, "url": "", "descripcion": "Financia investigaciones de maestría y doctorado sobre realidades de mujeres en la costa pacífica colombiana, enfocándose en género, inclusión financiera, emprendimiento, cuidado, salud sexual y reproductiva, y poblaciones vulnerables.", "palabras_clave": "género, investigación aplicada, mujeres, Pacífico colombiano, Fundación WWB", "postulacion": "No", "fecha_envio": "", "seguimiento": "Nadie Interesado", "profesores_enviado": "", "orden": 15}, {"id": "C014", "num": "13.0", "responsable": "DIeI", "periodo": "2026.0", "titulo": "Expertise France", "fuente": "Expertise France", "moneda": "EUR", "monto_original": 50000.0, "trm": 4221.0, "valor_pesos": 211050000.0, "fecha_cierre": "2026-06-30", "estado": "CERRADA", "match_ur": 80.0, "url": "", "descripcion": "No indica", "palabras_clave": "no indica", "postulacion": "Sí", "fecha_envio": "", "seguimiento": "Oscar Maldonado", "profesores_enviado": "", "orden": 14}, {"id": "C013", "num": "12.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Convocatoria 2026 Colombia Inteligente", "fuente": "Minciencias", "moneda": "COP", "monto_original": 418992000.0, "trm": 0.0, "valor_pesos": 418992000.0, "fecha_cierre": "2026-07-22", "estado": "CERRADA", "match_ur": 95.0, "url": "", "descripcion": "Fortalece la Investigación Aplicada, el Desarrollo Tecnológico y la Innovación en ciencias cuánticas e Inteligencia Artificial para el desarrollo ambiental, social y económico de las regiones, alineado con la Política de Investigación e Innovación Orientada por Misiones.", "palabras_clave": "Inteligencia Artificial, investigación aplicada, desarrollo tecnológico, innovación, Colombia", "postulacion": "No", "fecha_envio": "", "seguimiento": "Nadie Interesado", "profesores_enviado": "", "orden": 13}, {"id": "C012", "num": "", "responsable": "LinkedIn", "periodo": "2026.0", "titulo": "Consultoría para el diseño de los Centros Binacionales de Atención Fronteriza en Rumichaca y Mataje–Alto Mira y Frontera (Nariño)", "fuente": "CAF", "moneda": "USD", "monto_original": 730000.0, "trm": 3575.0, "valor_pesos": 2609750000.0, "fecha_cierre": "2026-06-29", "estado": "CERRADA", "match_ur": 90.0, "url": "", "descripcion": "Elaboración de los estudios y diseños definitivos para construir centros de atención en los pasos fronterizos de Rumichaca y Mataje, ubicados en el departamento de Nariño.", "palabras_clave": "Elaboración de los estudios y diseños definitivos para construir centros de atención en los pasos fronterizos de Rumichaca y Mataje, ubicados en el departamento de Nariño.", "postulacion": "No", "fecha_envio": "", "seguimiento": "Se envío postulación a Fernando Carriazo, Juan Carlos Mendieta y David Ruiz 9-6-26 /", "profesores_enviado": "", "orden": 12}, {"id": "C011", "num": "11.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Convocatoria Supranacional 2026 de ayudas a proyectos archivísticos", "fuente": "Iberarchivos", "moneda": "EUR", "monto_original": 30000.0, "trm": 3718.0, "valor_pesos": 111540000.0, "fecha_cierre": "2026-07-06", "estado": "CERRADA", "match_ur": 70.0, "url": "", "descripcion": "El Programa Iberarchivos lanza una convocatoria para proyectos archivísticos de ámbito supranacional. Busca fomentar el acceso a la información, fortalecer la memoria colectiva y la preservación del patrimonio documental en Iberoamérica.", "palabras_clave": "archivos, memoria colectiva, Iberoamérica, investigación aplicada, patrimonio documental", "postulacion": "No", "fecha_envio": "", "seguimiento": "Nadie Interesado", "profesores_enviado": "", "orden": 11}, {"id": "C010", "num": "10.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "SPJ Foundation Grant — Press Freedom & Media Literacy 2026", "fuente": "Society of Professional Journalists Foundation", "moneda": "USD", "monto_original": 75000.0, "trm": 3275.0, "valor_pesos": 245625000.0, "fecha_cierre": "2026-08-13", "estado": "CERRADA", "match_ur": 62.0, "url": "", "descripcion": "Convocatoria abierta a periodistas, profesionales de medios y organizaciones que trabajen en libertad de prensa, resiliencia de salas de redacción y confianza pública en el periodismo. Prioriza iniciativas de advocacy, alfabetización mediática y acceso a información veraz.", "palabras_clave": "press freedom, media literacy, periodismo, nonprofit, advocacy", "postulacion": "No", "fecha_envio": "", "seguimiento": "Nadie Interesado", "profesores_enviado": "", "orden": 10}, {"id": "C009", "num": "9.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Pulitzer Center — Global Reporting Grants (ventanilla permanente)", "fuente": "Pulitzer Center on Crisis Reporting", "moneda": "USD", "monto_original": 10000.0, "trm": 3275.0, "valor_pesos": 32750000.0, "fecha_cierre": "", "estado": "", "match_ur": 68.0, "url": "", "descripcion": "Grants de ventanilla abierta para periodismo investigativo de alto impacto sobre temas sub-reportados a nivel mundial, sin restricción de tema ni ubicación. Abarca todos los formatos: texto, fotografía, audio/podcast, video, documental y multimedia. Acepta propuestas en inglés, español, francés, por", "palabras_clave": "reporting grant, prensa libre, periodismo investigativo, Global South, IA accountability", "postulacion": "No", "fecha_envio": "", "seguimiento": "Nadie Interesado", "profesores_enviado": "", "orden": 9}, {"id": "C008", "num": "8.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Pulitzer Center — AI Reporting Grants (Global South, incl. América Latina)", "fuente": "Pulitzer Center on Crisis Reporting", "moneda": "USD", "monto_original": 15000.0, "trm": 3275.0, "valor_pesos": 49125000.0, "fecha_cierre": "", "estado": "", "match_ur": 74.0, "url": "", "descripcion": "", "palabras_clave": "IA accountability, periodismo, Global South, Colombia, derechos digitales", "postulacion": "No", "fecha_envio": "2026-08-27", "seguimiento": "danghelly, diego, phronimos,", "profesores_enviado": "", "orden": 8}, {"id": "C007", "num": "7.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Horizon Europe — Sustainable Paths to Media Viability (HORIZON-CL2-2026-01-DEMOCRACY-04)", "fuente": "Comisión Europea — Horizon Europe, Cluster 2", "moneda": "EUR", "monto_original": 4000000.0, "trm": 3718.0, "valor_pesos": 14872000000.0, "fecha_cierre": "2026-09-23", "estado": "ABIERTA", "match_ur": 72.0, "url": "", "descripcion": "Convocatoria de Innovación de Horizon Europe para desarrollar y testear modelos de financiación sostenibles y herramientas tecnológicas para medios de comunicación independientes, fortaleciendo la democracia y la independencia editorial en la era digital. Incluye expresamente países de bajos y media", "palabras_clave": "media viability, periodismo independiente, democracia, Horizon Europe, LMIC", "postulacion": "No", "fecha_envio": "", "seguimiento": "Nadie Interesado", "profesores_enviado": "", "orden": 7}, {"id": "C006", "num": "6.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "CEPF — Fondo de Critical Ecosystem Partnership Fund: Hotspot Andes Tropicales (Ecuador, abierto para LAC)", "fuente": "Critical Ecosystem Partnership Fund (CEPF) / Conservation International", "moneda": "USD", "monto_original": 50000.0, "trm": 3275.0, "valor_pesos": 163750000.0, "fecha_cierre": "2026-07-07", "estado": "CERRADA", "match_ur": 75.0, "url": "", "descripcion": "CEPF abre convocatoria para conservar el hotspot de biodiversidad de los Andes Tropicales, con proyectos que deben concluir antes del 31 de diciembre de 2026. Elegibles ONG, grupos comunitarios, universidades, empresas privadas y organizaciones de sociedad civil. Proyectos fuera del área geográfica", "palabras_clave": "biodiversidad, Andes Tropicales, conservación, universidades, gobernanza ambiental", "postulacion": "No", "fecha_envio": "", "seguimiento": "Nadie Interesado", "profesores_enviado": "", "orden": 6}, {"id": "C005", "num": "5.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "MinAmbiente — Alerta por mi Ambiente 2026", "fuente": "Ministerio de Ambiente y Desarrollo Sostenible de Colombia", "moneda": "COP", "monto_original": 10000000.0, "trm": 0.0, "valor_pesos": 10000000.0, "fecha_cierre": "", "estado": "CERRADA", "match_ur": 58.0, "url": "", "descripcion": "Convocatoria abierta del MinAmbiente para impulsar 150 procesos de control social a la gestión ambiental en 16 territorios. Invita a comunidades, organizaciones sociales, colectivos ciudadanos, redes territoriales y grupos académicos a fortalecer la participación ciudadana, acceso a información públ", "palabras_clave": "control social ambiental, Acuerdo de Escazú, participación ciudadana, territorio, gobernanza", "postulacion": "No", "fecha_envio": "", "seguimiento": "Nadie Interesado", "profesores_enviado": "", "orden": 5}, {"id": "C004", "num": "4.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "AECID — Cooperación Triangular para América Latina y el Caribe 2026", "fuente": "AECID / APC-Colombia", "moneda": "EUR", "monto_original": 125000.0, "trm": 3718.0, "valor_pesos": 464750000.0, "fecha_cierre": "2026-07-06", "estado": "CERRADA", "match_ur": 88.0, "url": "", "descripcion": "Convocatoria AECID para diseñar y ejecutar acciones de cooperación triangular entre al menos dos países de ALC más un socio español, orientadas a resolver retos de desarrollo sostenible mediante intercambio de conocimientos y políticas. Las propuestas se canalizan a través de APC-Colombia y deben ge", "palabras_clave": "cooperación triangular, políticas públicas, territorio, desarrollo sostenible, ALC", "postulacion": "No", "fecha_envio": "", "seguimiento": "Nadie Interesado", "profesores_enviado": "", "orden": 4}, {"id": "C003", "num": "3.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Horizonte Europa - Cluster 2: Culture, creativity and inclusive society", "fuente": "Horizonte Europa", "moneda": "EUR", "monto_original": 0.0, "trm": 0.0, "valor_pesos": 0.0, "fecha_cierre": "2026-09-23", "estado": "ABIERTA", "match_ur": 80.0, "url": "", "descripcion": "Financia investigación e innovación en Europa para lograr impacto científico, tecnológico, económico y social. El Cluster 2 se enfoca en valores democráticos europeos, patrimonio cultural y transformaciones socioeconómicas inclusivas.", "palabras_clave": "democracia, cultura, inclusión, investigación, innovación", "postulacion": "No", "fecha_envio": "", "seguimiento": "Nadie Interesado", "profesores_enviado": "", "orden": 3}, {"id": "C002", "num": "2.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Center for International Private Enterprise (CIPE) Grants", "fuente": "CIPE", "moneda": "USD", "monto_original": 0, "trm": 0.0, "valor_pesos": 0, "fecha_cierre": "", "estado": "PERMANENTE", "match_ur": 70.0, "url": "", "descripcion": "Apoyo financiero a organizaciones empresariales no gubernamentales para fomentar principios de empresa privada y desarrollo democrático. Busca fortalecer la democracia a través del sector privado.", "palabras_clave": "empresa privada, democracia, ONG, desarrollo económico, alianzas", "postulacion": "No", "fecha_envio": "", "seguimiento": "Nadie Interesado", "profesores_enviado": "", "orden": 2}, {"id": "C001", "num": "1.0", "responsable": "DDesarrollo", "periodo": "2026.0", "titulo": "Convocatoria 2026 del Programa de Cooperación Triangular para América Latina y El Caribe", "fuente": "APC Colombia", "moneda": "EUR", "monto_original": 125000.0, "trm": 3718.0, "valor_pesos": 464750000.0, "fecha_cierre": "2026-07-06", "estado": "CERRADA", "match_ur": 85.0, "url": "", "descripcion": "Impulsa la cooperación triangular en América Latina y el Caribe para la consecución de los ODS, fomentando alianzas estratégicas y el intercambio de experiencias. Permite el diseño y ejecución de programaciones técnicas.", "palabras_clave": "cooperación triangular, América Latina, ODS, alianzas, políticas públicas", "postulacion": "No", "fecha_envio": "", "seguimiento": "Nadie Interesado", "profesores_enviado": "", "orden": 1}];
+
+// ═══ STATE ═══════════════════════════════════════════════════
+let DATA = [];
+let sortKey = 'idx', sortDir = -1;
+const CH = {};
+
+function fmtFecha(s){
+  if(!s||s==='') return '—';
+  const m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? m[3]+'/'+m[2]+'/'+m[1] : s;
+}
+
+const ESTADO_COL = {
+  'ABIERTA':'#2D6A4F','CERRADA':'#5A5850','PERMANENTE':'#1C4F82',
+  'PRÓXIMA A ABRIR':'#7B4F12','PRÓXIMA A ABRIR':'#7B4F12','':'#aaa'
+};
+const ESTADO_BADGE = {
+  'ABIERTA':'b-grn','CERRADA':'b-gry','PERMANENTE':'b-blue',
+  'PRÓXIMA A ABRIR':'b-amb','PRÓXIMA A ABRIR':'b-amb','':'b-gry'
+};
+const POST_COL   = {'Identificada':'#5A5850','Enviada a profesores':'#BA7517','Sin respuesta de profesores':'#1A1915','En formulación':'#1C4F82','Enviada a la entidad':'#C71585','Aprobada':'#2D6A4F','Rechazada':'#7D2020','Desierta':'#4A2980'};
+const POST_BADGE = {'Identificada':'b-gry','Enviada a profesores':'b-amb','Sin respuesta de profesores':'b-blk','En formulación':'b-blue','Enviada a la entidad':'b-fucsia','Aprobada':'b-grn','Rechazada':'b-red','Desierta':'b-pur'};
+
+// ═══ STORAGE ═════════════════════════════════════════════════
+// ═══ CONEXIÓN CON EXCEL VÍA POWER AUTOMATE ═══════════════════
+const URL_LEER = 'https://defaultae52575789ba4d30a2f749796ef8c6.04.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/07/workflows/7a941d2633894430840e30df6cdbfa83/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YaPzCsHVIL2HigbNqQ2mo2VTyk7XVO2eX7L0cgtTf6s';
+const URL_GUARDAR = 'https://defaultae52575789ba4d30a2f749796ef8c6.04.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/12/workflows/4c1b1028eccb4cf5a84baac725b9053b/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=p1jyzmcAm_1WE-7m0NsA-MOIarcAzbr10cbrCfX-3o0';
+
+let guardando = false;
+let cambiosPendientes = false;
+
+// Mapa: nombres de columna del Excel → campos internos del dashboard
+const COL_MAP = {
+  'ID':'id','Orden':'orden','Título':'titulo','Fuente':'fuente',
+  'Responsable identificación':'responsable','Periodo':'periodo','Moneda':'moneda',
+  'Monto original':'monto_original','TRM':'trm','Valor pesos (COP)':'valor_pesos',
+  'Fecha cierre':'fecha_cierre','Fecha próxima a abrir':'fecha_proxima_abrir',
+  'Estado convocatoria':'estado','Match UR':'match_ur','Estado de gestión UR':'postulacion',
+  'Fecha envío a profes':'fecha_envio','Profesores a quienes se envía':'profesores_enviado',
+  'URL':'url','Palabras clave':'palabras_clave','Descripción':'descripcion','Seguimiento':'seguimiento'
+};
+const COL_MAP_INV = {};
+Object.keys(COL_MAP).forEach(k=>{ COL_MAP_INV[COL_MAP[k]]=k; });
+
+function excelToInterno(fila){
+  const obj={};
+  Object.keys(fila).forEach(col=>{
+    const campo=COL_MAP[col]||col;
+    obj[campo]=fila[col];
+  });
+  // Asegurar tipos
+  obj.valor_pesos=Number(obj.valor_pesos)||0;
+  obj.monto_original=Number(obj.monto_original)||0;
+  obj.trm=Number(obj.trm)||0;
+  obj.match_ur=Number(obj.match_ur)||0;
+  obj.orden=Number(obj.orden)||0;
+  ['titulo','fuente','estado','postulacion','fecha_cierre','fecha_envio','fecha_proxima_abrir','url','palabras_clave','descripcion','seguimiento','profesores_enviado','responsable','moneda','periodo','id'].forEach(k=>{ if(obj[k]===undefined||obj[k]===null) obj[k]=''; else obj[k]=String(obj[k]); });
+  return obj;
+}
+function internoToExcel(rec){
+  const fila={};
+  Object.keys(COL_MAP_INV).forEach(campo=>{
+    const col=COL_MAP_INV[campo];
+    let v=rec[campo];
+    if(v===undefined||v===null) v='';
+    fila[col]=v;
+  });
+  return fila;
+}
+
+async function loadData(){
+  const statusEl=document.getElementById('sync-status');
+  if(statusEl) statusEl.innerHTML='<span class="spin"></span> Cargando desde Excel...';
+  try{
+    const resp=await fetch(URL_LEER,{method:'POST',headers:{'Content-Type':'text/plain'},body:'{}'});
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const txt=await resp.text();
+    const filas=JSON.parse(txt);
+    DATA=filas.map(excelToInterno);
+    if(statusEl) statusEl.innerHTML='<span style="color:#2D6A4F">✓ Sincronizado con Excel</span>';
+  }catch(e){
+    console.error('Error al cargar:',e);
+    if(statusEl) statusEl.innerHTML='<span style="color:#7D2020">⚠ Error al cargar. Usando datos locales.</span>';
+    // Fallback: intentar localStorage, si no el SEED
+    try{ const s=localStorage.getItem('conv_backup'); DATA = s?JSON.parse(s):JSON.parse(JSON.stringify(SEED)); }
+    catch(e2){ DATA=JSON.parse(JSON.stringify(SEED)); }
+  }
+}
+
+async function save(){
+  // Backup local siempre
+  try{ localStorage.setItem('conv_backup',JSON.stringify(DATA)); }catch(e){}
+  // Guardar en Excel (con anti-solapamiento)
+  if(guardando){ cambiosPendientes=true; return; }
+  guardando=true;
+  const statusEl=document.getElementById('sync-status');
+  if(statusEl) statusEl.innerHTML='<span class="spin"></span> Guardando en Excel...';
+  try{
+    const filas=DATA.map(internoToExcel);
+    const payload=JSON.stringify({ datos: JSON.stringify(filas) });
+    const resp=await fetch(URL_GUARDAR,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload});
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    if(statusEl) statusEl.innerHTML='<span style="color:#2D6A4F">✓ Guardado en Excel</span>';
+  }catch(e){
+    console.error('Error al guardar:',e);
+    if(statusEl) statusEl.innerHTML='<span style="color:#7D2020">⚠ Error al guardar en Excel (cambios en local)</span>';
+  }
+  guardando=false;
+  if(cambiosPendientes){ cambiosPendientes=false; save(); }
+}
+
+// ═══ UTILS ═══════════════════════════════════════════════════
+function fmt(n){
+  n=Number(n)||0; if(!n) return '—';
+  if(n>=1e9) return '$'+(n/1e9).toFixed(2)+'B';
+  if(n>=1e6) return '$'+(n/1e6).toFixed(1)+'M';
+  if(n>=1e3) return '$'+(n/1e3).toFixed(0)+'K';
+  return '$'+n.toLocaleString('es-CO');
+}
+function norm(s){ return (s||'').toLowerCase().trim(); }
+function destroyCh(id){ if(CH[id]){ CH[id].destroy(); delete CH[id]; } }
+function countBy(arr,k){ return arr.reduce((a,x)=>{ const v=x[k]||''; a[v]=(a[v]||0)+1; return a; },{}); }
+function topN(obj,n){ return Object.entries(obj).filter(([k])=>k).sort((a,b)=>b[1]-a[1]).slice(0,n); }
+function diasParaCierre(fc){
+  if(!fc||fc.toUpperCase()==='CERRADA'||fc.toUpperCase()==='PERMANENTE') return null;
+  const d=new Date(fc), hoy=new Date();
+  hoy.setHours(0,0,0,0);
+  return Math.round((d-hoy)/(1000*60*60*24));
+}
+
+// ═══ NAV ═════════════════════════════════════════════════════
+const TITLES={resumen:'Resumen',convocatorias:'Convocatorias',pipeline:'Pipeline',nueva:'Nueva convocatoria'};
+function go(id){
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('pane-'+id).classList.add('active');
+  document.getElementById('nav-'+id).classList.add('active');
+  document.getElementById('topbar-title').textContent=TITLES[id];
+  if(id==='resumen'){ renderMetrics(); renderResumen(); }
+  if(id==='convocatorias'){ fillFilters(); renderTable(); setTimeout(initColumnResize,80); }
+  if(id==='pipeline'){ renderPipeline(); }
+}
+
+// ═══ MÉTRICAS ════════════════════════════════════════════════
+function renderMetrics(){
+  const g = e => DATA.filter(d=>d.postulacion===e).length;
+
+  const total = DATA.length;
+  const abiertas = DATA.filter(d=>d.estado.toUpperCase().includes('ABIERTA')).length;
+  const enviadasProfes = g('Enviada a profesores');
+  const sinRespuesta = g('Sin respuesta de profesores');
+  // Sometidas = formulación + enviada a entidad + aprobada + rechazada
+  const enFormulacion = g('En formulación');
+  const enviadaEntidad = g('Enviada a la entidad');
+  const aprobadas = g('Aprobada');
+  const rechazadas = g('Rechazada');
+  const desiertas = g('Desierta');
+  const sometidas = enFormulacion + enviadaEntidad + aprobadas + rechazadas;
+
+  // Tasa de postulación = sometidas / enviadas a profesores
+  const baseEnvio = enviadasProfes + sinRespuesta + sometidas + aprobadas*0; // convocatorias que llegaron a profes
+  const tasaPost = (enviadasProfes+sinRespuesta+sometidas)>0 ? Math.round(sometidas/(enviadasProfes+sinRespuesta+sometidas)*100) : 0;
+  // Tasa de aceptación = aprobadas / (aprobadas + rechazadas)
+  const resueltas = aprobadas + rechazadas;
+  const tasaAcept = resueltas>0 ? Math.round(aprobadas/resueltas*100) : 0;
+
+  document.getElementById('topbar-tag').textContent=total+' convocatorias';
+  document.getElementById('metrics').innerHTML=`
+    <div class="mc" style="--ca:#5A5850"><div class="mc-lbl">Identificadas</div><div class="mc-val">${total}</div><div class="mc-sub">total en el tablero</div></div>
+    <div class="mc" style="--ca:#2D6A4F"><div class="mc-lbl">Abiertas</div><div class="mc-val" style="color:#2D6A4F">${abiertas}</div><div class="mc-sub">con plazo activo</div></div>
+    <div class="mc" style="--ca:#BA7517"><div class="mc-lbl">Enviadas a profes</div><div class="mc-val" style="color:#BA7517">${enviadasProfes}</div><div class="mc-sub">compartidas con docentes</div></div>
+    <div class="mc" style="--ca:#1A1915"><div class="mc-lbl">Sin respuesta de profes</div><div class="mc-val" style="color:#1A1915">${sinRespuesta}</div><div class="mc-sub">sin retroalimentación</div></div>
+    <div class="mc" style="--ca:#1C4F82"><div class="mc-lbl">Sometidas</div><div class="mc-val" style="color:#1C4F82">${sometidas}</div><div class="mc-sub">formulación + entidad + resueltas</div></div>
+    <div class="mc" style="--ca:#2D6A4F"><div class="mc-lbl">Aprobadas</div><div class="mc-val" style="color:#2D6A4F">${aprobadas}</div><div class="mc-sub">adjudicadas</div></div>
+    <div class="mc" style="--ca:#7D2020"><div class="mc-lbl">Rechazadas</div><div class="mc-val" style="color:#7D2020">${rechazadas}</div><div class="mc-sub">no adjudicadas</div></div>
+    <div class="mc" style="--ca:#4A2980"><div class="mc-lbl">Tasa de postulación</div><div class="mc-val" style="color:#4A2980">${tasaPost}%</div><div class="mc-sub">sometidas / enviadas a profes</div></div>
+    <div class="mc" style="--ca:#2D6A4F"><div class="mc-lbl">Tasa de aceptación</div><div class="mc-val" style="color:#2D6A4F">${tasaAcept}%</div><div class="mc-sub">aprobadas / resueltas</div></div>
+  `;
+}
+
+// ═══ RESUMEN CHARTS ══════════════════════════════════════════
+function renderResumen(){
+  // Estado
+  const estMap=countBy(DATA,'estado');
+  destroyCh('estado');
+  const labE=Object.keys(estMap).filter(k=>k), valE=labE.map(k=>estMap[k]);
+  document.getElementById('leg-estado').innerHTML=labE.map(l=>`<div class="li"><div class="ld" style="background:${ESTADO_COL[l]||'#aaa'}"></div>${l} (${estMap[l]})</div>`).join('');
+  CH['estado']=new Chart(document.getElementById('ch-estado'),{type:'doughnut',data:{labels:labE,datasets:[{data:valE,backgroundColor:labE.map(l=>ESTADO_COL[l]||'#aaa'),borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false}}}});
+
+  // Postulación
+  const postMap=countBy(DATA,'postulacion');
+  destroyCh('post');
+  const labP=Object.keys(postMap).filter(k=>k), valP=labP.map(k=>postMap[k]);
+  document.getElementById('leg-post').innerHTML=labP.map(l=>`<div class="li"><div class="ld" style="background:${POST_COL[l]||'#aaa'}"></div>${l} (${postMap[l]})</div>`).join('');
+  CH['post']=new Chart(document.getElementById('ch-post'),{type:'doughnut',data:{labels:labP,datasets:[{data:valP,backgroundColor:labP.map(l=>POST_COL[l]||'#aaa'),borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false}}}});
+
+  // Valor por estado
+  const estValor={};
+  DATA.forEach(d=>{ if(d.estado) estValor[d.estado]=(estValor[d.estado]||0)+(Number(d.valor_pesos)||0); });
+  const labV=Object.keys(estValor).filter(k=>k&&estValor[k]>0);
+  destroyCh('valor');
+  CH['valor']=new Chart(document.getElementById('ch-valor'),{type:'bar',data:{labels:labV,datasets:[{data:labV.map(k=>Math.round(estValor[k]/1e6)),backgroundColor:labV.map(l=>ESTADO_COL[l]||'#aaa'),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'$'+v+'M',font:{size:10}}},x:{ticks:{font:{size:10},maxRotation:30}}}}});
+
+  // Responsable
+  const respMap=countBy(DATA,'responsable');
+  destroyCh('resp');
+  const labR=Object.keys(respMap).filter(k=>k), valR=labR.map(k=>respMap[k]);
+  const colR=['#1C4F82','#2D6A4F','#7B4F12','#4A2980','#1A5F6A','#7D2020'];
+  CH['resp']=new Chart(document.getElementById('ch-resp'),{type:'doughnut',data:{labels:labR,datasets:[{data:valR,backgroundColor:labR.map((_,i)=>colR[i%colR.length]),borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10}}}}});
+
+  // Temas más consultados (palabras clave de TODAS las convocatorias)
+  const temasMap={};
+  const stopW=new Set(['para','como','entre','desde','sobre','hacia','todas','otros','con','los','las','una','del','que','por','más','sus','the','and','for']);
+  DATA.forEach(d=>{
+    (d.palabras_clave||'').split(/[,;\n]+/).forEach(kw=>{
+      const k=kw.trim().toLowerCase();
+      if(k.length>3&&!stopW.has(k)) temasMap[k]=(temasMap[k]||0)+1;
+    });
+  });
+  const topTemas=Object.entries(temasMap).filter(([k])=>k).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const hT=Math.max(220,topTemas.length*30+40);
+  document.getElementById('ch-temas-wrap').style.height=hT+'px';
+  destroyCh('temas');
+  const tCols=['#1C4F82','#2D6A4F','#7B4F12','#4A2980','#1A5F6A','#7D2020','#378ADD','#639922','#BA7517','#534AB7','#185FA5','#3B6D11','#854F0B','#A32D2D'];
+  CH['temas']=new Chart(document.getElementById('ch-temas'),{type:'bar',data:{labels:topTemas.map(x=>x[0]),datasets:[{data:topTemas.map(x=>x[1]),backgroundColor:tCols,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{stepSize:1,font:{size:10}}},y:{ticks:{font:{size:10}}}}}});
+
+  // Convocatorias por profesor (de la celda profesores_enviado)
+  const profMap={};
+  DATA.forEach(d=>{
+    (d.profesores_enviado||'').split(/[,;\n]+/).forEach(p=>{
+      const nombre=p.trim();
+      if(nombre.length>1) profMap[nombre]=(profMap[nombre]||0)+1;
+    });
+  });
+  const topProfes=Object.entries(profMap).filter(([k])=>k).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const hProf=Math.max(200,topProfes.length*26+40);
+  const wrapProf=document.getElementById('ch-profes-wrap');
+  if(wrapProf){
+    wrapProf.style.height=hProf+'px';
+    destroyCh('profes');
+    if(topProfes.length>0){
+      CH['profes']=new Chart(document.getElementById('ch-profes'),{type:'bar',data:{labels:topProfes.map(x=>x[0]),datasets:[{data:topProfes.map(x=>x[1]),backgroundColor:'#B5D4F4',borderColor:'#1C4F82',borderWidth:1.5,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{stepSize:1,font:{size:10}}},y:{ticks:{font:{size:10}}}}}});
+    } else {
+      wrapProf.innerHTML='<div style="text-align:center;padding:30px;color:var(--text-faint);font-size:13px">Aún no hay profesores registrados. Agrégalos en el campo \'Profesores a quienes se envía\' de cada convocatoria.</div>';
+    }
+  }
+}
+
+// ═══ TABLE ═══════════════════════════════════════════════════
+function fillFilters(){
+  const opts=(id,vals)=>{ const el=document.getElementById(id),prev=el.value; const first=el.options[0].outerHTML; el.innerHTML=first+vals.map(v=>`<option>${v}</option>`).join(''); if(vals.includes(prev)) el.value=prev; };
+  opts('f-estado',[...new Set(DATA.map(d=>d.estado).filter(Boolean))].sort());
+  
+}
+function clearF(){
+  document.getElementById('f-buscar').value='';
+  ['f-estado','f-post'].forEach(id=>document.getElementById(id).value='');
+  renderTable();
+}
+function getFiltered(){
+  const fB=norm(document.getElementById('f-buscar').value);
+  const fE=document.getElementById('f-estado').value;
+  const fP=document.getElementById('f-post').value;
+  const fR='';
+  return DATA.filter(d=>
+    (!fB||norm(d.titulo).includes(fB)||norm(d.fuente).includes(fB)||norm(d.palabras_clave).includes(fB))&&
+    (!fE||d.estado===fE)&&(!fP||d.postulacion.includes(fP))&&(!fR||d.responsable===fR)
+  );
+}
+function sortBy(k){
+  if(sortKey===k) sortDir*=-1; else{ sortKey=k; sortDir=1; }
+  document.querySelectorAll('[id^="s-"]').forEach(e=>e.textContent='');
+  const el=document.getElementById('s-'+k); if(el) el.textContent=sortDir===1?' ↑':' ↓';
+  renderTable();
+}
+
+function toggleInline(id){
+  document.querySelectorAll('.inline-edit-row.open').forEach(r=>{
+    if(r.id!=='ie-'+id) r.classList.remove('open');
+  });
+  const row=document.getElementById('ie-'+id);
+  if(row) row.classList.toggle('open');
+}
+
+function saveInline(id){
+  const d=DATA.find(x=>x.id===id); if(!d) return;
+  const g=i=>document.getElementById(i+id);
+  if(g('ie-tit-')&&g('ie-tit-').value.trim()) d.titulo=g('ie-tit-').value.trim();
+  if(g('ie-fue-')) d.fuente=g('ie-fue-').value.trim();
+  if(g('ie-val-')) d.valor_pesos=parseFloat(g('ie-val-').value)||0;
+  if(g('ie-mat-')) d.match_ur=parseFloat(g('ie-mat-').value)||0;
+  if(g('ie-mon-')) d.moneda=g('ie-mon-').value.trim();
+  if(g('ie-mto-')) d.monto_original=parseFloat(g('ie-mto-').value)||0;
+  if(g('ie-trm-')) d.trm=parseFloat(g('ie-trm-').value)||0;
+  if(g('ie-est-')) d.estado=g('ie-est-').value;
+  if(g('ie-pst-')) d.postulacion=g('ie-pst-').value;
+  if(g('ie-res-')) d.responsable=g('ie-res-').value.trim();
+  if(g('ie-fc-')&&g('ie-fc-').value) d.fecha_cierre=g('ie-fc-').value;
+  if(g('ie-fpa-')) d.fecha_proxima_abrir=g('ie-fpa-').value;
+  if(g('ie-fe-')&&g('ie-fe-').value) d.fecha_envio=g('ie-fe-').value;
+  if(g('ie-url-')) d.url=g('ie-url-').value.trim();
+  if(g('ie-prof-')) d.profesores_enviado=g('ie-prof-').value.trim();
+  if(g('ie-kw-')) d.palabras_clave=g('ie-kw-').value.trim();
+  if(g('ie-dsc-')) d.descripcion=g('ie-dsc-').value.trim();
+  if(g('ie-seg-')&&g('ie-seg-').value.trim()){
+    const nota=g('ie-seg-').value.trim();
+    const fecha=new Date().toLocaleDateString('es-CO');
+    d.seguimiento=(d.seguimiento?d.seguimiento+' / ':'')+nota+' ('+fecha+')';
+  }
+  save();
+  const msg=g('ie-msg-');
+  if(msg) msg.innerHTML='<span style="color:#2D6A4F;font-weight:600">✓ Guardado</span>';
+  setTimeout(()=>{ renderTable(); renderMetrics(); renderResumen(); },700);
+}
+
+function renderTable(){
+  let rows=getFiltered();
+  rows.sort((a,b)=>{
+    if(sortKey==='idx') return (Number(b.orden)||0)-(Number(a.orden)||0);
+    let va=a[sortKey],vb=b[sortKey];
+    if(typeof va==='string') return sortDir*(va||'').localeCompare(vb||'');
+    return sortDir*((Number(va)||0)-(Number(vb)||0));
+  });
+  document.getElementById('topbar-tag').textContent=rows.length+'/'+DATA.length;
+  document.getElementById('t-footer').innerHTML=`<strong>${rows.length}</strong> convocatorias · Valor total: <strong>${fmt(rows.reduce((s,x)=>s+(Number(x.valor_pesos)||0),0))}</strong> COP`;
+  const body=document.getElementById('t-body');
+  if(!rows.length){ body.innerHTML='<tr><td colspan="9"><div class="empty">Sin resultados</div></td></tr>'; return; }
+  body.innerHTML=rows.map(d=>{
+    const dias=diasParaCierre(d.fecha_cierre);
+    const urgente=dias!==null&&dias>=0&&dias<=14;
+    const profes=d.seguimiento&&!d.seguimiento.toLowerCase().includes('nadie')?d.seguimiento.slice(0,40)+(d.seguimiento.length>40?'…':''):'—';
+    const matchColor=d.match_ur>=90?'color:#2D6A4F;font-weight:600':d.match_ur>=75?'color:#7B4F12':d.match_ur>0?'color:#5A5850':'color:#ccc';
+    const eOpts=['ABIERTA','CERRADA','PERMANENTE','PRÓXIMA A ABRIR'].map(o=>`<option value="${o}"${d.estado===o?' selected':''}>${o}</option>`).join('');
+    const pOpts=['','Aprobada','Desierta','En formulación','Enviada a la entidad','Enviada a profesores','Identificada','Rechazada','Sin respuesta de profesores'].map(o=>`<option value="${o}"${d.postulacion===o?' selected':''}>${o}</option>`).join('');
+    const feVal=(d.fecha_envio||'').slice(0,10);
+    return `<tr style="cursor:pointer" onclick="toggleInline('${d.id}')">
+      <td style="font-weight:500;white-space:normal;word-break:normal;${urgente?';border-left:3px solid #7D2020':''}">${d.titulo||'—'}</td>
+      <td style="white-space:normal;word-break:normal;color:var(--text-secondary)">${d.fuente||'—'}</td>
+      <td style="white-space:nowrap;font-size:11px${urgente?';color:#7D2020;font-weight:500':''}">${d.estado==='PRÓXIMA A ABRIR'&&d.fecha_proxima_abrir?'Abre: '+fmtFecha(d.fecha_proxima_abrir):(fmtFecha(d.fecha_cierre)||d.estado||'—')}</td>
+      <td style="text-align:right;font-weight:500;white-space:nowrap">${d.valor_pesos?'$'+Number(d.valor_pesos).toLocaleString('es-CO'):'—'}</td>
+      <td style="text-align:right;${matchColor}">${d.match_ur||'—'}</td>
+      <td><span class="badge ${ESTADO_BADGE[d.estado]||'b-gry'}">${d.estado||'—'}</span></td>
+      <td><span class="badge ${POST_BADGE[d.postulacion]||'b-gry'}">${d.postulacion||'—'}</span></td>
+      <td style="text-align:center">${d.url&&d.url!=='---'&&d.url!==''?`<a href="${d.url}" target="_blank" rel="noopener" style="font-size:11px;font-weight:600;color:#1C4F82;text-decoration:none;padding:3px 8px;border:1px solid #1C4F82;border-radius:4px" title="${d.url}">Ver</a>`:'—'}</td>
+      <td><button onclick="event.stopPropagation();toggleInline('${d.id}')" style="background:none;border:none;cursor:pointer;color:var(--text-faint);padding:3px" title="Editar">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button></td>
+    </tr>
+    <tr id="ie-${d.id}" class="inline-edit-row">
+      <td colspan="9">
+        <div class="ieg">
+          <div class="ief span3"><label>Título</label><input type="text" id="ie-tit-${d.id}" value="${(d.titulo||'').replace(/"/g,'&quot;')}"></div>
+          <div class="ief"><label>Fuente</label><input type="text" id="ie-fue-${d.id}" value="${(d.fuente||'').replace(/"/g,'&quot;')}"></div>
+          <div class="ief"><label>Valor COP</label><input type="number" id="ie-val-${d.id}" value="${d.valor_pesos||0}"></div>
+          <div class="ief"><label>Match UR (%)</label><input type="number" id="ie-mat-${d.id}" value="${d.match_ur||0}" min="0" max="100"></div>
+          <div class="ief"><label>Moneda</label><input type="text" id="ie-mon-${d.id}" value="${(d.moneda||'').replace(/"/g,'&quot;')}"></div>
+          <div class="ief"><label>Monto original</label><input type="number" id="ie-mto-${d.id}" value="${d.monto_original||0}"></div>
+          <div class="ief"><label>TRM</label><input type="number" id="ie-trm-${d.id}" value="${d.trm||0}"></div>
+          <div class="ief"><label>Estado convocatoria</label><select id="ie-est-${d.id}">${eOpts}</select></div>
+          <div class="ief"><label>Fecha próxima a abrir</label><input type="date" id="ie-fpa-${d.id}" value="${(d.fecha_proxima_abrir||'').slice(0,10)}"></div>
+          <div class="ief"><label>Estado de gestión UR</label><select id="ie-pst-${d.id}">${pOpts}</select></div>
+          <div class="ief"><label>Responsable identificación</label><input type="text" id="ie-res-${d.id}" value="${(d.responsable||'').replace(/"/g,'&quot;')}"></div>
+          <div class="ief"><label>Fecha cierre</label><input type="date" id="ie-fc-${d.id}" value="${(d.fecha_cierre||'').slice(0,10)}"></div>
+          <div class="ief"><label>Fecha envío a profes</label><input type="date" id="ie-fe-${d.id}" value="${feVal}"></div>
+          <div class="ief"><label>URL convocatoria</label><input type="text" id="ie-url-${d.id}" value="${(d.url||'').replace(/"/g,'&quot;')}"></div>
+          <div class="ief span3"><label>Profesores a quienes se envía (separados por coma)</label><input type="text" id="ie-prof-${d.id}" value="${(d.profesores_enviado||'').replace(/"/g,'&quot;')}" placeholder="Ej: Juan Pérez, María Gómez, Carlos Ruiz"></div>
+          <div class="ief span3"><label>Palabras clave</label><input type="text" id="ie-kw-${d.id}" value="${(d.palabras_clave||'').replace(/"/g,'&quot;')}"></div>
+          <div class="ief span3"><label>Descripción</label><textarea id="ie-dsc-${d.id}">${d.descripcion||''}</textarea></div>
+          <div class="ief span3"><label>Agregar nota de seguimiento</label>
+            <textarea id="ie-seg-${d.id}" placeholder="Escribe aquí la actualización — se añade al historial..."></textarea>
+          </div>
+        </div>
+        <div class="ie-btns">
+          <button class="ie-save" onclick="saveInline('${d.id}')">✓ Guardar cambios</button>
+          <button class="ie-cancel" onclick="toggleInline('${d.id}')">Cancelar</button>
+          <span id="ie-msg-${d.id}" style="font-size:11px;margin-left:6px"></span>
+        </div>
+        <div class="ie-hist"><strong>Historial:</strong> ${d.seguimiento||'—'}</div>
+      </td>
+    </tr>`;
+  }).join('');
+  setTimeout(initColumnResize, 30);
+}
+
+// ═══ PIPELINE ════════════════════════════════════════════════
+function renderPipeline(){
+  const total=DATA.length;
+  const abiertas=DATA.filter(d=>d.estado.toUpperCase().includes('ABIERTA')).length;
+  const enviadas=DATA.filter(d=>d.fecha_envio).length;
+  const enGestion=DATA.filter(d=>d.postulacion.toLowerCase().includes('pendiente')||d.postulacion.toLowerCase().includes('enviar')).length;
+  const postuladas=DATA.filter(d=>norm(d.postulacion)==='sí'||norm(d.postulacion)==='si').length;
+
+  document.getElementById('pipeline-stages').innerHTML=`
+    <div class="pipe-stage"><div class="num" style="color:#1C4F82">${total}</div><div class="lbl">Identificadas</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-stage"><div class="num" style="color:#2D6A4F">${abiertas}</div><div class="lbl">Abiertas</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-stage"><div class="num" style="color:#7B4F12">${enviadas}</div><div class="lbl">Enviadas a profes</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-stage"><div class="num" style="color:#4A2980">${enGestion}</div><div class="lbl">En gestión</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-stage"><div class="num" style="color:#2D6A4F">${postuladas}</div><div class="lbl">Postuladas</div></div>
+  `;
+
+  // Top oportunidades
+  const oport=DATA.filter(d=>d.match_ur>=80&&(d.estado.toUpperCase().includes('ABIERTA')||d.estado.toUpperCase().includes('PRÓXIMA')||d.estado.toUpperCase().includes('PROXIMA'))).sort((a,b)=>b.match_ur-a.match_ur).slice(0,8);
+  document.getElementById('top-oport').innerHTML=oport.length?oport.map(d=>`<tr>
+    <td style="cursor:pointer;font-weight:500;font-size:11px" onclick="go('convocatorias')">${(d.titulo||'').slice(0,55)}${d.titulo.length>55?'…':''}</td>
+    <td style="text-align:right;font-weight:600;color:#2D6A4F">${d.match_ur}%</td>
+    <td style="text-align:right;white-space:nowrap">${d.valor_pesos ? "$"+Number(d.valor_pesos).toLocaleString("es-CO") : "—"}</td>
+    <td style="font-size:11px;white-space:nowrap">${fmtFecha(d.fecha_cierre)}</td>
+  </tr>`).join(''):'<tr><td colspan="4" class="empty">Sin oportunidades abiertas con match ≥ 80</td></tr>';
+
+  // Con seguimiento
+  const conSeg=DATA.filter(d=>d.seguimiento&&d.seguimiento.length>5&&!d.seguimiento.toLowerCase().includes('nadie')).sort((a,b)=>b.seguimiento.length-a.seguimiento.length).slice(0,8);
+  document.getElementById('top-seg').innerHTML=conSeg.length?conSeg.map(d=>`<tr>
+    <td style="font-size:11px;font-weight:500">${(d.titulo||'').slice(0,50)}…</td>
+    <td style="font-size:10px;color:var(--mut)">${d.seguimiento.slice(0,60)}…</td>
+    <td><span class="badge ${ESTADO_BADGE[d.estado]||'b-gry'}" style="font-size:9px">${d.estado||'—'}</span></td>
+  </tr>`).join(''):'<tr><td colspan="3" class="empty">Sin seguimientos registrados</td></tr>';
+
+  // Timeline
+  const proximas=DATA.filter(d=>{const dias=diasParaCierre(d.fecha_cierre); return dias!==null&&dias>=0&&dias<=90;}).sort((a,b)=>diasParaCierre(a.fecha_cierre)-diasParaCierre(b.fecha_cierre));
+  document.getElementById('timeline').innerHTML=proximas.length?proximas.map(d=>{
+    const dias=diasParaCierre(d.fecha_cierre);
+    const pct=Math.max(5,Math.min(100,Math.round((1-dias/90)*100)));
+    const col=dias<=7?'#7D2020':dias<=14?'#7B4F12':dias<=30?'#1C4F82':'#2D6A4F';
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+        <span style="font-size:12px;font-weight:500">${(d.titulo||'').slice(0,60)}…</span>
+        <span style="font-size:11px;color:${col};font-weight:600;flex-shrink:0;margin-left:10px">${dias} días (${fmtFecha(d.fecha_cierre)})</span>
+      </div>
+      <div style="background:var(--sur2);border-radius:99px;height:5px"><div style="height:5px;border-radius:99px;background:${col};width:${pct}%;transition:width .5s"></div></div>
+    </div>`;
+  }).join(''):'<div class="empty">No hay convocatorias con cierre en los próximos 90 días</div>';
+}
+
+// ═══ DRAWER ══════════════════════════════════════════════════
+function openDrw(id){
+  const d=DATA.find(x=>x.id===id); if(!d) return;
+  const row=(k,v)=>`<div class="drw-row"><span class="drw-key">${k}</span><span class="drw-val">${v||'—'}</span></div>`;
+  const full=(k,v)=>`<div class="drw-full"><span class="drw-key">${k}</span><div class="drw-val">${v||'—'}</div></div>`;
+  const dias=diasParaCierre(d.fecha_cierre);
+  document.getElementById('drw-body').innerHTML=`
+    <button class="drw-close" onclick="closeDrw()">✕</button>
+    <h2>${d.titulo||'Sin título'}</h2>
+    <div class="drw-meta">${d.fuente||'—'} · ${d.periodo||'—'} · ${d.responsable||'—'}</div>
+    <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+      <span class="badge ${ESTADO_BADGE[d.estado]||'b-gry'}">${d.estado||'—'}</span>
+      <span class="badge ${POST_BADGE[d.postulacion]||'b-gry'}">${d.postulacion||'—'}</span>
+      ${d.match_ur?`<span class="badge b-blue">Match ${d.match_ur}%</span>`:''}
+      ${dias!==null&&dias>=0?`<span class="badge b-amb">Cierra en ${dias} días</span>`:''}
+    </div>
+    <div class="drw-sec">Financiación</div>
+    ${row('Moneda',d.moneda)}
+    ${row('Monto original',d.monto_original?Number(d.monto_original).toLocaleString()+' '+d.moneda:'—')}
+    ${row('TRM',d.trm?'$'+Number(d.trm).toLocaleString():'—')}
+    ${row('Valor COP',d.valor_pesos?'$'+Number(d.valor_pesos).toLocaleString('es-CO'):'—')}
+    <div class="drw-sec">Fechas</div>
+    ${row('Fecha cierre',fmtFecha(d.fecha_cierre))}
+    ${row('Fecha envío a profes',fmtFecha(d.fecha_envio)||'—')}
+    <div class="drw-sec">Temática</div>
+    ${full('Palabras clave',d.palabras_clave)}
+    ${full('Descripción',d.descripcion)}
+    <div class="drw-sec">Seguimiento</div>
+    ${full('Profes contactados / notas',d.seguimiento||d.profesores_enviado)}
+    ${d.url&&d.url!=='Ver'&&d.url!=='ver'?`<div style="margin-top:12px"><a href="${d.url}" target="_blank" class="btn btn-ghost btn-sm">🔗 Ver convocatoria</a></div>`:''}
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <button class="btn btn-primary btn-sm" onclick="closeDrw();setTimeout(()=>toggleInline('${d.id}'),100)">Editar en tabla</button>
+    </div>
+  `;
+  document.getElementById('drw-ov').classList.add('open');
+}
+function closeDrw(){ document.getElementById('drw-ov').classList.remove('open'); }
+
+function editarEstado(id){
+  const d=DATA.find(x=>x.id===id); if(!d) return;
+  const post=prompt('Postulación actual: '+d.postulacion+'\nNuevo valor (Sí / No / Pendiente / Enviar profes):',d.postulacion);
+  if(post===null) return;
+  d.postulacion=post.trim();
+  const seg=prompt('Seguimiento actual:\n'+d.seguimiento+'\n\nAgregar nota (se añade al final):');
+  if(seg&&seg.trim()) d.seguimiento+=(d.seguimiento?' / ':'')+seg.trim()+' '+new Date().toLocaleDateString('es-CO');
+  save(); renderMetrics(); renderResumen();
+  if(document.getElementById('pane-convocatorias').classList.contains('active')) renderTable();
+  alert('✓ Guardado');
+}
+
+// ═══ ANALIZAR URL ════════════════════════════════════════════
+async function analizarURL(){
+  const url=document.getElementById('ai-url').value.trim();
+  if(!url){ alert('Pega un link primero'); return; }
+  const btn=document.getElementById('ai-btn');
+  const status=document.getElementById('ai-status');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span>Analizando…';
+  status.innerHTML='<span class="spin"></span>Leyendo la página y extrayendo información…';
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1000,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        messages:[{role:'user',content:`Analiza esta convocatoria de financiación: ${url}
+
+Si puedes acceder al link, extrae la información. Si no, búscala en la web.
+
+Responde ÚNICAMENTE con un objeto JSON (sin markdown, sin texto adicional):
+{
+  "titulo": "nombre completo de la convocatoria",
+  "fuente": "entidad/organización que financia",
+  "moneda": "COP/USD/EUR/etc",
+  "monto_original": número o 0,
+  "trm": número o 0,
+  "valor_pesos": número estimado en COP o 0,
+  "fecha_cierre": "YYYY-MM-DD o PERMANENTE o vacío",
+  "estado": "ABIERTA/CERRADA/PERMANENTE/PRÓXIMA A ABRIR",
+  "match_ur": número entre 0-100 indicando compatibilidad con universidad pública colombiana de humanidades y ciencias sociales,
+  "descripcion": "descripción breve en 2-3 oraciones",
+  "palabras_clave": "tema1, tema2, tema3",
+  "url": "${url}"
+}`}]
+      })
+    });
+    const data=await resp.json();
+    const text=data.content.filter(c=>c.type==='text').map(c=>c.text).join('');
+    let parsed;
+    try{
+      const clean=text.replace(/```json|```/g,'').trim();
+      parsed=JSON.parse(clean);
+    }catch(e){
+      const match=text.match(/\{[\s\S]+\}/);
+      if(match) parsed=JSON.parse(match[0]);
+      else throw new Error('No se pudo parsear la respuesta');
+    }
+    // Llenar formulario
+    document.getElementById('f-titulo').value=parsed.titulo||'';
+    document.getElementById('f-fuente').value=parsed.fuente||'';
+    document.getElementById('f-moneda').value=parsed.moneda||'COP';
+    document.getElementById('f-monto').value=parsed.monto_original||0;
+    document.getElementById('f-trm').value=parsed.trm||0;
+    document.getElementById('f-valor-pesos').value=parsed.valor_pesos||0;
+    document.getElementById('f-cierre').value=parsed.fecha_cierre&&parsed.fecha_cierre.match(/\d{4}-\d{2}-\d{2}/)?parsed.fecha_cierre:'';
+    document.getElementById('f-estado-new').value=parsed.estado||'ABIERTA';
+    document.getElementById('f-match').value=parsed.match_ur||0;
+    document.getElementById('f-desc').value=parsed.descripcion||'';
+    document.getElementById('f-keywords').value=parsed.palabras_clave||'';
+    document.getElementById('ai-result').classList.add('show');
+    status.innerHTML='<span style="color:var(--grn)">✓ Información extraída correctamente. Revisa y ajusta los campos antes de guardar.</span>';
+  }catch(e){
+    status.innerHTML=`<span style="color:var(--red)">✗ Error al analizar: ${e.message}. Intenta completar los campos manualmente.</span>`;
+    document.getElementById('ai-result').classList.add('show');
+  }
+  btn.disabled=false; btn.innerHTML='<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> Analizar';
+}
+
+// ═══ GUARDAR ═════════════════════════════════════════════════
+function maxOrden(){ return DATA.reduce((m,d)=>Math.max(m,Number(d.orden)||0),0); }
+function guardar(){
+  const titulo=document.getElementById('f-titulo').value.trim();
+  const msg=document.getElementById('f-msg');
+  if(!titulo){ msg.innerHTML='<span class="msg-err">El título es requerido.</span>'; return; }
+  const rec={
+    id:'N'+Date.now(), orden:maxOrden()+1, num:'', responsable:document.getElementById('f-resp-new').value.trim()||'Manual',
+    periodo:new Date().getFullYear().toString(), titulo,
+    fuente:document.getElementById('f-fuente').value.trim(),
+    moneda:document.getElementById('f-moneda').value,
+    monto_original:parseFloat(document.getElementById('f-monto').value)||0,
+    trm:parseFloat(document.getElementById('f-trm').value)||0,
+    valor_pesos:parseFloat(document.getElementById('f-valor-pesos').value)||0,
+    fecha_cierre:document.getElementById('f-cierre').value,
+    estado:document.getElementById('f-estado-new').value,
+    match_ur:parseFloat(document.getElementById('f-match').value)||0,
+    url:document.getElementById('ai-url').value.trim(),
+    descripcion:document.getElementById('f-desc').value.trim(),
+    palabras_clave:document.getElementById('f-keywords').value.trim(),
+    postulacion:document.getElementById('f-post-new').value,
+    fecha_envio:document.getElementById('f-fecha-envio').value,
+    seguimiento:document.getElementById('f-seg').value.trim(),
+    profesores_enviado:(document.getElementById('f-profesores')?document.getElementById('f-profesores').value.trim():''),
+  };
+  DATA.unshift(rec); save();
+  msg.innerHTML='<span class="msg-ok">✓ Convocatoria guardada correctamente.</span>';
+  setTimeout(()=>{ limpiarForm(); go('convocatorias'); },1500);
+}
+
+function guardarManual(){
+  const titulo=document.getElementById('m-titulo').value.trim();
+  const msg=document.getElementById('m-msg');
+  if(!titulo){ msg.innerHTML='<span class="msg-err">El título es requerido.</span>'; return; }
+  const rec={
+    id:'M'+Date.now(), orden:maxOrden()+1, num:'', responsable:document.getElementById('m-resp').value.trim()||'Manual',
+    periodo:new Date().getFullYear().toString(), titulo,
+    fuente:document.getElementById('m-fuente').value.trim(),
+    moneda:document.getElementById('m-moneda').value,
+    monto_original:parseFloat(document.getElementById('m-monto').value)||0,
+    trm:parseFloat(document.getElementById('m-trm').value)||0,
+    valor_pesos:parseFloat(document.getElementById('m-valor-pesos').value)||0,
+    fecha_cierre:document.getElementById('m-cierre').value,
+    estado:document.getElementById('m-estado').value,
+    match_ur:parseFloat(document.getElementById('m-match').value)||0,
+    url:document.getElementById('m-url').value.trim(),
+    descripcion:document.getElementById('m-desc').value.trim(),
+    palabras_clave:document.getElementById('m-keywords').value.trim(),
+    postulacion:document.getElementById('m-post').value,
+    fecha_envio:document.getElementById('m-fecha-envio').value,
+    seguimiento:document.getElementById('m-seg').value.trim(),
+    profesores_enviado:'',
+  };
+  DATA.unshift(rec); save();
+  msg.innerHTML='<span class="msg-ok">✓ Guardado.</span>';
+  setTimeout(()=>{ ['m-titulo','m-fuente','m-monto','m-trm','m-valor-pesos','m-resp','m-url','m-keywords','m-desc','m-seg'].forEach(id=>document.getElementById(id).value=''); msg.innerHTML=''; go('convocatorias'); },1400);
+}
+
+function limpiarForm(){
+  ['f-titulo','f-fuente','f-monto','f-trm','f-valor-pesos','f-cierre','f-match','f-resp-new','f-fecha-envio','f-keywords','f-desc','f-seg','f-profesores','ai-url'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
+  document.getElementById('ai-result').classList.remove('show');
+  document.getElementById('ai-status').innerHTML='';
+  document.getElementById('f-msg').innerHTML='';
+}
+
+// ═══ EXPORT ══════════════════════════════════════════════════
+function exportCSV(){
+  const cols=['titulo','fuente','moneda','monto_original','trm','valor_pesos','fecha_cierre','estado','match_ur','postulacion','fecha_envio','responsable','palabras_clave','descripcion','seguimiento','url'];
+  const hdr=cols.join(',');
+  const rows=DATA.map(d=>cols.map(c=>`"${String(d[c]||'').replace(/"/g,"'")}"`).join(','));
+  const csv='\uFEFF'+[hdr,...rows].join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download='convocatorias_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+// ═══ FIX PIPELINE TYPO ═══════════════════════════════════════
+// Fix: 'top-opert' -> debe ser 'top-oport'
+document.addEventListener('DOMContentLoaded',()=>{
+  const el=document.getElementById('top-oport');
+  if(el) el.id='top-oport';
+});
+
+// ═══ INIT ════════════════════════════════════════════════════
+
+// ═══ REDIMENSIONAR COLUMNAS (tipo Excel) ═════════════════════
+function initColumnResize(){
+  const table=document.getElementById('main-table');
+  if(!table) return;
+  const ths=table.querySelectorAll('thead th');
+  ths.forEach((th, idx)=>{
+    // No añadir resizer a la última columna (Ver / acciones)
+    if(idx>=ths.length-1) return;
+    // Evitar duplicados
+    if(th.querySelector('.col-resizer')) return;
+    const rez=document.createElement('div');
+    rez.className='col-resizer';
+    th.appendChild(rez);
+    let startX, startW;
+    rez.addEventListener('mousedown', e=>{
+      e.preventDefault(); e.stopPropagation();
+      startX=e.pageX;
+      startW=th.offsetWidth;
+      rez.classList.add('resizing');
+      const onMove=ev=>{
+        const newW=Math.max(40, startW+(ev.pageX-startX));
+        th.style.width=newW+'px';
+      };
+      const onUp=()=>{
+        rez.classList.remove('resizing');
+        document.removeEventListener('mousemove',onMove);
+        document.removeEventListener('mouseup',onUp);
+        // Guardar anchos en localStorage
+        saveColWidths();
+      };
+      document.addEventListener('mousemove',onMove);
+      document.addEventListener('mouseup',onUp);
+    });
+  });
+  loadColWidths();
+}
+function saveColWidths(){
+  const ths=document.querySelectorAll('#main-table thead th');
+  const widths=[...ths].map(th=>th.style.width||'');
+  try{ localStorage.setItem('conv_col_widths', JSON.stringify(widths)); }catch(e){}
+}
+function loadColWidths(){
+  try{
+    const s=localStorage.getItem('conv_col_widths');
+    if(!s) return;
+    const widths=JSON.parse(s);
+    const ths=document.querySelectorAll('#main-table thead th');
+    ths.forEach((th,i)=>{ if(widths[i]) th.style.width=widths[i]; });
+  }catch(e){}
+}
+
+async function recargar(){
+  await loadData();
+  DATA.forEach(d=>{ if(d.estado && (d.estado.toUpperCase().includes('PROXIMA')||d.estado.includes('PRÓXIMA'))) d.estado='PRÓXIMA A ABRIR'; });
+  renderMetrics(); renderResumen();
+  const pane=document.querySelector('.pane.active');
+  if(pane && pane.id==='pane-convocatorias'){ fillFilters(); renderTable(); }
+  if(pane && pane.id==='pane-pipeline') renderPipeline();
+}
+
+async function iniciar(){
+  await loadData();
+  // Normalizar PRÓXIMA A ABRIR
+  DATA.forEach(d=>{
+    if(d.estado && (d.estado.toUpperCase().includes('PROXIMA') || d.estado.includes('PRÓXIMA')))
+      d.estado='PRÓXIMA A ABRIR';
+  });
+  renderMetrics();
+  renderResumen();
+}
+iniciar();
+</script>
+</body>
+</html>
