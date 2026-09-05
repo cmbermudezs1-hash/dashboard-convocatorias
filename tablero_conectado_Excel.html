@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tablero de Convocatorias — FEIPU & ECH</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,100..1000&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 :root{
@@ -19,8 +20,8 @@
   --gry:#5A5850;--gryl:#EDEAE3;
   --r:10px;--rs:6px;
   --sh:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);
-  --fd:'DM Serif Display',Georgia,serif;
-  --fb:'DM Sans',system-ui,sans-serif;
+  --fd:'Google Sans Flex','DM Serif Display',Georgia,serif;
+  --fb:'Google Sans Flex','DM Sans',system-ui,sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--fb);background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5;min-height:100vh}
@@ -91,15 +92,19 @@ tbody tr:hover td{background:var(--bg)}
 
 /* BADGE */
 .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500;white-space:nowrap}
-.b-grn{background:var(--grnl);color:var(--grn)}
-.b-blue{background:var(--accl);color:var(--acc)}
-.b-amb{background:var(--ambl);color:var(--amb)}
-.b-red{background:var(--redl);color:var(--red)}
-.b-tel{background:var(--tell);color:var(--tel)}
-.b-pur{background:var(--purl);color:var(--pur)}
-.b-gry{background:var(--gryl);color:var(--gry)}
-.b-blk{background:#E8E6E0;color:#1A1915;font-weight:600}
-.b-fucsia{background:#FCE4F1;color:#C71585;font-weight:600}
+.b-grn{background:#70B75D;color:#fff;font-weight:500}
+.b-blue{background:#1F9FE0;color:#fff;font-weight:500}
+.b-amb{background:#F2C500;color:#4A3B00;font-weight:600}
+.b-red{background:#E63946;color:#fff;font-weight:500}
+.b-teal{background:#8AE81D;color:#2A4A00;font-weight:600}
+.b-tel{background:#8AE81D;color:#2A4A00;font-weight:600}
+.b-pur{background:#BA25D8;color:#fff;font-weight:500}
+.b-gry{background:#E1AE9E;color:#5A2E1E;font-weight:600}
+.b-blk{background:#E1AE9E;color:#5A2E1E;font-weight:600}
+.b-fucsia{background:#FD0B9B;color:#fff;font-weight:500}
+.b-dorado{background:#F2C500;color:#4A3B00;font-weight:600}
+.b-azul{background:#1F9FE0;color:#fff;font-weight:500}
+.b-amarillo{background:#8AE81D;color:#2A4A00;font-weight:600}
 
 /* DRAWER */
 .drw-ov{display:none;position:fixed;inset:0;z-index:200}
@@ -205,8 +210,9 @@ tbody tr:hover td{background:var(--bg)}
 
 <aside class="sb">
   <div class="sb-logo">
-    <div class="org">Convocatorias</div>
-    <div class="sub">Seguimiento FEIPU · ECH</div>
+    <img id="escudo-ur" src="escudo_urosario.png" alt="Universidad del Rosario" style="height:44px;width:auto;margin-bottom:10px;display:none" onload="this.style.display='block'">
+    <div class="org">Convocatorias EESPI</div>
+    
   </div>
   <nav class="sb-nav">
     <div class="nav-lbl">Vistas</div>
@@ -258,8 +264,8 @@ tbody tr:hover td{background:var(--bg)}
           <div style="position:relative;height:180px"><canvas id="ch-estado"></canvas></div>
         </div>
         <div class="cc">
-          <div class="cc-title">Postulación</div>
-          <div class="cc-sub">¿Se postuló? ¿Quién está interesado?</div>
+          <div class="cc-title">Estado de gestión UR</div>
+          <div class="cc-sub">Proporción de convocatorias por estado de gestión</div>
           <div class="legend" id="leg-post"></div>
           <div style="position:relative;height:180px"><canvas id="ch-post"></canvas></div>
         </div>
@@ -351,62 +357,12 @@ tbody tr:hover td{background:var(--bg)}
     <!-- NUEVA -->
     <div class="pane" id="pane-nueva">
       <!-- AI SECTION -->
-      <div class="ai-box">
-        <h3>
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          Analizar convocatoria desde URL
-        </h3>
-        <p>Pega el link de la convocatoria y Claude leerá la página para completar automáticamente los campos. Tú revisas y confirmas antes de guardar.</p>
-        <div class="ai-input-row">
-          <input type="text" class="ai-input" id="ai-url" placeholder="https://... pega aquí el link de la convocatoria">
-          <button class="btn btn-teal" onclick="analizarURL()" id="ai-btn">
-            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-            Analizar
-          </button>
-        </div>
-        <div class="ai-status" id="ai-status"></div>
-        <div class="ai-result" id="ai-result">
-          <div style="font-size:12px;font-weight:600;color:var(--grn);margin-bottom:12px">✓ Información extraída — revisa y ajusta antes de guardar</div>
-          <div class="fg2">
-            <div class="ai-field sp2"><label>Título *</label><input type="text" id="f-titulo"></div>
-            <div class="ai-field"><label>Fuente / Entidad</label><input type="text" id="f-fuente"></div>
-            <div class="ai-field"><label>Moneda</label><select id="f-moneda"><option>COP</option><option>USD</option><option>EUR</option><option>GBP</option><option>CAD</option><option>LIB</option><option>Otro</option></select></div>
-            <div class="ai-field"><label>Monto original</label><input type="number" id="f-monto" placeholder="0"></div>
-            <div class="ai-field"><label>TRM</label><input type="number" id="f-trm" placeholder="0"></div>
-            <div class="ai-field"><label>Valor en pesos</label><input type="number" id="f-valor-pesos" placeholder="0"></div>
-            <div class="ai-field"><label>Fecha cierre</label><input type="date" id="f-cierre"></div>
-            <div class="ai-field"><label>Estado</label>
-              <select id="f-estado-new">
-                <option>ABIERTA</option><option>CERRADA</option><option>PERMANENTE</option>
-                <option>PRÓXIMA A ABRIR</option><option>PRÓXIMA A ABRIR</option>
-              </select>
-            </div>
-            <div class="ai-field"><label>Match UR (%)</label><input type="number" id="f-match" min="0" max="100" placeholder="0–100"></div>
-            <div class="ai-field"><label>Responsable identificación</label><input type="text" id="f-resp-new" placeholder="DDesarrollo, DIeI…"></div>
-            <div class="ai-field"><label>Estado de gestión UR</label>
-              <select id="f-post-new"><option value=""></option><option>Aprobada</option><option>Desierta</option><option>En formulación</option><option>Enviada a la entidad</option><option>Enviada a profesores</option><option>Identificada</option><option>Rechazada</option><option>Sin respuesta de profesores</option></select>
-            </div>
-            <div class="ai-field"><label>Fecha envío a profes</label><input type="date" id="f-fecha-envio"></div>
-            <div class="ai-field sp2"><label>Palabras clave</label><input type="text" id="f-keywords" placeholder="tema1, tema2, tema3…"></div>
-            <div class="ai-field sp2"><label>Profesores a quienes se envía (separados por coma)</label><input type="text" id="f-profesores" placeholder="Ej: Juan Pérez, María Gómez, Carlos Ruiz"></div>
-            <div class="ai-field sp2"><label>Descripción</label><textarea id="f-desc"></textarea></div>
-            <div class="ai-field sp2"><label>Seguimiento / Profes contactados</label><textarea id="f-seg" placeholder="Nombres de profes, fechas, respuestas…"></textarea></div>
-          </div>
-          <div style="display:flex;gap:8px;margin-top:14px">
-            <button class="btn btn-primary" onclick="guardar()">
-              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-              Guardar convocatoria
-            </button>
-            <button class="btn btn-ghost" onclick="limpiarForm()">Limpiar</button>
-          </div>
-          <div class="f-msg" id="f-msg"></div>
-        </div>
-      </div>
+      
 
       <!-- MANUAL FORM -->
       <div class="form-card">
-        <div style="font-size:14px;font-weight:600;margin-bottom:4px">O agregar manualmente</div>
-        <div style="font-size:12px;color:var(--mut);margin-bottom:14px">Si ya tienes los datos puedes completarlos directamente aquí</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">Registrar convocatoria</div>
+        <div style="font-size:12px;color:var(--mut);margin-bottom:14px">Completa los datos de la nueva convocatoria</div>
         <div class="fg2">
           <div class="ai-field sp2"><label>Título *</label><input type="text" id="m-titulo" placeholder="Nombre de la convocatoria"></div>
           <div class="ai-field"><label>Fuente / Entidad</label><input type="text" id="m-fuente"></div>
@@ -421,7 +377,7 @@ tbody tr:hover td{background:var(--bg)}
           <div class="ai-field"><label>Match UR (%)</label><input type="number" id="m-match" min="0" max="100"></div>
           <div class="ai-field"><label>Responsable</label><input type="text" id="m-resp"></div>
           <div class="ai-field"><label>Estado de gestión UR</label>
-            <select id="m-post"><option>No</option><option>Sí</option><option>Pendiente</option><option>Enviar profes</option></select>
+            <select id="m-post"><option value=""></option><option>Aprobada</option><option>Desierta</option><option>En formulación</option><option>Enviada a la entidad</option><option>Enviada a profesores</option><option>Identificada</option><option>Rechazada</option><option>Sin respuesta de profesores</option></select>
           </div>
           <div class="ai-field"><label>Fecha envío</label><input type="date" id="m-fecha-envio"></div>
           <div class="ai-field"><label>URL</label><input type="text" id="m-url" placeholder="https://…"></div>
@@ -462,15 +418,15 @@ function fmtFecha(s){
 }
 
 const ESTADO_COL = {
-  'ABIERTA':'#2D6A4F','CERRADA':'#5A5850','PERMANENTE':'#1C4F82',
-  'PRÓXIMA A ABRIR':'#7B4F12','PRÓXIMA A ABRIR':'#7B4F12','':'#aaa'
+  'ABIERTA':'#70B75D','CERRADA':'#B0A89E','PERMANENTE':'#1F9FE0',
+  'PRÓXIMA A ABRIR':'#F2C500','':'#ccc'
 };
 const ESTADO_BADGE = {
-  'ABIERTA':'b-grn','CERRADA':'b-gry','PERMANENTE':'b-blue',
-  'PRÓXIMA A ABRIR':'b-amb','PRÓXIMA A ABRIR':'b-amb','':'b-gry'
+  'ABIERTA':'b-grn','CERRADA':'b-gry','PERMANENTE':'b-azul',
+  'PRÓXIMA A ABRIR':'b-amarillo','':'b-gry'
 };
-const POST_COL   = {'Identificada':'#5A5850','Enviada a profesores':'#BA7517','Sin respuesta de profesores':'#1A1915','En formulación':'#1C4F82','Enviada a la entidad':'#C71585','Aprobada':'#2D6A4F','Rechazada':'#7D2020','Desierta':'#4A2980'};
-const POST_BADGE = {'Identificada':'b-gry','Enviada a profesores':'b-amb','Sin respuesta de profesores':'b-blk','En formulación':'b-blue','Enviada a la entidad':'b-fucsia','Aprobada':'b-grn','Rechazada':'b-red','Desierta':'b-pur'};
+const POST_COL   = {'Identificada':'#BA25D8','Enviada a profesores':'#F2C500','Sin respuesta de profesores':'#E1AE9E','En formulación':'#1F9FE0','Enviada a la entidad':'#FD0B9B','Aprobada':'#70B75D','Rechazada':'#E63946','Desierta':'#8AE81D'};
+const POST_BADGE = {'Identificada':'b-pur','Enviada a profesores':'b-dorado','Sin respuesta de profesores':'b-gry','En formulación':'b-azul','Enviada a la entidad':'b-fucsia','Aprobada':'b-grn','Rechazada':'b-red','Desierta':'b-amarillo'};
 
 // ═══ STORAGE ═════════════════════════════════════════════════
 // ═══ CONEXIÓN CON EXCEL VÍA POWER AUTOMATE ═══════════════════
@@ -593,6 +549,47 @@ function go(id){
 }
 
 // ═══ MÉTRICAS ════════════════════════════════════════════════
+
+// Abre panel lateral con el desglose de convocatorias de una tarjeta
+function abrirDetalleTarjeta(tipo){
+  // "identificadas" → ir a la hoja Convocatorias
+  if(tipo==='identificadas'){ go('convocatorias'); return; }
+
+  let lista=[], titulo='';
+  const g = e => DATA.filter(d=>d.postulacion===e);
+
+  if(tipo==='abiertas'){ titulo='Abiertas'; lista=DATA.filter(d=>d.estado.toUpperCase().includes('ABIERTA')); }
+  else if(tipo==='enviadas'){ titulo='Enviadas a profesores'; lista=g('Enviada a profesores'); }
+  else if(tipo==='sinrespuesta'){ titulo='Sin respuesta de profesores'; lista=g('Sin respuesta de profesores'); }
+  else if(tipo==='sometidas'){ titulo='Sometidas'; lista=DATA.filter(d=>['En formulación','Enviada a la entidad','Aprobada','Rechazada'].includes(d.postulacion)); }
+  else if(tipo==='aprobadas'){ titulo='Aprobadas'; lista=g('Aprobada'); }
+  else if(tipo==='rechazadas'){ titulo='Rechazadas'; lista=g('Rechazada'); }
+  else if(tipo==='tasapost'){ titulo='Base de tasa de postulación'; lista=DATA.filter(d=>['Enviada a profesores','Sin respuesta de profesores','En formulación','Enviada a la entidad','Aprobada','Rechazada'].includes(d.postulacion)); }
+  else if(tipo==='tasaacept'){ titulo='Base de tasa de aceptación'; lista=DATA.filter(d=>['Aprobada','Rechazada'].includes(d.postulacion)); }
+
+  const body=document.getElementById('drw-body');
+  const filas=lista.map(d=>`
+    <div style="padding:10px 0;border-bottom:1px solid var(--brd)">
+      <div style="font-weight:500;font-size:13px;margin-bottom:3px">${d.titulo||'—'}</div>
+      <div style="font-size:11px;color:var(--mut)">${d.fuente||'—'}</div>
+      <div style="display:flex;gap:6px;margin-top:5px;flex-wrap:wrap">
+        <span class="badge ${ESTADO_BADGE[d.estado]||'b-gry'}" style="font-size:9px">${d.estado||'—'}</span>
+        <span class="badge ${POST_BADGE[d.postulacion]||'b-gry'}" style="font-size:9px">${d.postulacion||'—'}</span>
+        ${d.valor_pesos?`<span style="font-size:11px;color:var(--mut)">$${Number(d.valor_pesos).toLocaleString('es-CO')}</span>`:''}
+      </div>
+    </div>
+  `).join('');
+
+  body.innerHTML=`
+    <button class="drw-close" onclick="cerrarDrw()">✕</button>
+    <h2 style="font-family:var(--fd);font-size:19px;margin-bottom:4px">${titulo}</h2>
+    <div style="font-size:12px;color:var(--fnt);margin-bottom:16px">${lista.length} convocatoria${lista.length!==1?'s':''}</div>
+    ${filas||'<div style="text-align:center;padding:30px;color:var(--fnt);font-size:13px">No hay convocatorias en esta categoría</div>'}
+  `;
+  document.getElementById('drw-ov').classList.add('open');
+}
+function cerrarDrw(){ document.getElementById('drw-ov').classList.remove('open'); }
+
 function renderMetrics(){
   const g = e => DATA.filter(d=>d.postulacion===e).length;
 
@@ -617,15 +614,15 @@ function renderMetrics(){
 
   document.getElementById('topbar-tag').textContent=total+' convocatorias';
   document.getElementById('metrics').innerHTML=`
-    <div class="mc" style="--ca:#5A5850"><div class="mc-lbl">Identificadas</div><div class="mc-val">${total}</div><div class="mc-sub">total en el tablero</div></div>
-    <div class="mc" style="--ca:#2D6A4F"><div class="mc-lbl">Abiertas</div><div class="mc-val" style="color:#2D6A4F">${abiertas}</div><div class="mc-sub">con plazo activo</div></div>
-    <div class="mc" style="--ca:#BA7517"><div class="mc-lbl">Enviadas a profes</div><div class="mc-val" style="color:#BA7517">${enviadasProfes}</div><div class="mc-sub">compartidas con docentes</div></div>
-    <div class="mc" style="--ca:#1A1915"><div class="mc-lbl">Sin respuesta de profes</div><div class="mc-val" style="color:#1A1915">${sinRespuesta}</div><div class="mc-sub">sin retroalimentación</div></div>
-    <div class="mc" style="--ca:#1C4F82"><div class="mc-lbl">Sometidas</div><div class="mc-val" style="color:#1C4F82">${sometidas}</div><div class="mc-sub">formulación + entidad + resueltas</div></div>
-    <div class="mc" style="--ca:#2D6A4F"><div class="mc-lbl">Aprobadas</div><div class="mc-val" style="color:#2D6A4F">${aprobadas}</div><div class="mc-sub">adjudicadas</div></div>
-    <div class="mc" style="--ca:#7D2020"><div class="mc-lbl">Rechazadas</div><div class="mc-val" style="color:#7D2020">${rechazadas}</div><div class="mc-sub">no adjudicadas</div></div>
-    <div class="mc" style="--ca:#4A2980"><div class="mc-lbl">Tasa de postulación</div><div class="mc-val" style="color:#4A2980">${tasaPost}%</div><div class="mc-sub">sometidas / enviadas a profes</div></div>
-    <div class="mc" style="--ca:#2D6A4F"><div class="mc-lbl">Tasa de aceptación</div><div class="mc-val" style="color:#2D6A4F">${tasaAcept}%</div><div class="mc-sub">aprobadas / resueltas</div></div>
+    <div class="mc" style="--ca:#BA25D8;cursor:pointer" onclick="abrirDetalleTarjeta('identificadas')"><div class="mc-lbl">Identificadas</div><div class="mc-val">${total}</div><div class="mc-sub">total en el tablero</div></div>
+    <div class="mc" style="--ca:#70B75D;cursor:pointer" onclick="abrirDetalleTarjeta('abiertas')"><div class="mc-lbl">Abiertas</div><div class="mc-val" style="color:#70B75D">${abiertas}</div><div class="mc-sub">con plazo activo</div></div>
+    <div class="mc" style="--ca:#F2C500;cursor:pointer" onclick="abrirDetalleTarjeta('enviadas')"><div class="mc-lbl">Enviadas a profes</div><div class="mc-val" style="color:#F2C500">${enviadasProfes}</div><div class="mc-sub">compartidas con docentes</div></div>
+    <div class="mc" style="--ca:#E1AE9E;cursor:pointer" onclick="abrirDetalleTarjeta('sinrespuesta')"><div class="mc-lbl">Sin respuesta de profes</div><div class="mc-val" style="color:#E1AE9E">${sinRespuesta}</div><div class="mc-sub">sin retroalimentación</div></div>
+    <div class="mc" style="--ca:#1F9FE0;cursor:pointer" onclick="abrirDetalleTarjeta('sometidas')"><div class="mc-lbl">Sometidas</div><div class="mc-val" style="color:#1F9FE0">${sometidas}</div><div class="mc-sub">formulación + entidad + resueltas</div></div>
+    <div class="mc" style="--ca:#70B75D;cursor:pointer" onclick="abrirDetalleTarjeta('aprobadas')"><div class="mc-lbl">Aprobadas</div><div class="mc-val" style="color:#70B75D">${aprobadas}</div><div class="mc-sub">adjudicadas</div></div>
+    <div class="mc" style="--ca:#E63946;cursor:pointer" onclick="abrirDetalleTarjeta('rechazadas')"><div class="mc-lbl">Rechazadas</div><div class="mc-val" style="color:#E63946">${rechazadas}</div><div class="mc-sub">no adjudicadas</div></div>
+    <div class="mc" style="--ca:#BA25D8;cursor:pointer" onclick="abrirDetalleTarjeta('tasapost')"><div class="mc-lbl">Tasa de postulación</div><div class="mc-val" style="color:#BA25D8">${tasaPost}%</div><div class="mc-sub">sometidas / enviadas a profes</div></div>
+    <div class="mc" style="--ca:#70B75D;cursor:pointer" onclick="abrirDetalleTarjeta('tasaacept')"><div class="mc-lbl">Tasa de aceptación</div><div class="mc-val" style="color:#70B75D">${tasaAcept}%</div><div class="mc-sub">aprobadas / resueltas</div></div>
   `;
 }
 
@@ -656,7 +653,7 @@ function renderResumen(){
   const respMap=countBy(DATA,'responsable');
   destroyCh('resp');
   const labR=Object.keys(respMap).filter(k=>k), valR=labR.map(k=>respMap[k]);
-  const colR=['#1C4F82','#2D6A4F','#7B4F12','#4A2980','#1A5F6A','#7D2020'];
+  const colR=['#BA25D8','#F2C500','#FD0B9B','#1F9FE0','#70B75D','#E63946','#E1AE9E','#8AE81D','#2E9AA8','#D06AD8','#F2A000','#5A7BC4'];
   CH['resp']=new Chart(document.getElementById('ch-resp'),{type:'doughnut',data:{labels:labR,datasets:[{data:valR,backgroundColor:labR.map((_,i)=>colR[i%colR.length]),borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10}}}}});
 
   // Temas más consultados (palabras clave de TODAS las convocatorias)
@@ -672,7 +669,7 @@ function renderResumen(){
   const hT=Math.max(220,topTemas.length*30+40);
   document.getElementById('ch-temas-wrap').style.height=hT+'px';
   destroyCh('temas');
-  const tCols=['#1C4F82','#2D6A4F','#7B4F12','#4A2980','#1A5F6A','#7D2020','#378ADD','#639922','#BA7517','#534AB7','#185FA5','#3B6D11','#854F0B','#A32D2D'];
+  const tCols=['#BA25D8','#F2C500','#FD0B9B','#1F9FE0','#70B75D','#E63946','#E1AE9E','#8AE81D','#2E9AA8','#D06AD8','#F2A000','#5A7BC4','#B85AC7','#8AB81D'];
   CH['temas']=new Chart(document.getElementById('ch-temas'),{type:'bar',data:{labels:topTemas.map(x=>x[0]),datasets:[{data:topTemas.map(x=>x[1]),backgroundColor:tCols,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{stepSize:1,font:{size:10}}},y:{ticks:{font:{size:10}}}}}});
 
   // Convocatorias por profesor (de la celda profesores_enviado)
@@ -690,7 +687,7 @@ function renderResumen(){
     wrapProf.style.height=hProf+'px';
     destroyCh('profes');
     if(topProfes.length>0){
-      CH['profes']=new Chart(document.getElementById('ch-profes'),{type:'bar',data:{labels:topProfes.map(x=>x[0]),datasets:[{data:topProfes.map(x=>x[1]),backgroundColor:'#B5D4F4',borderColor:'#1C4F82',borderWidth:1.5,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{stepSize:1,font:{size:10}}},y:{ticks:{font:{size:10}}}}}});
+      CH['profes']=new Chart(document.getElementById('ch-profes'),{type:'bar',data:{labels:topProfes.map(x=>x[0]),datasets:[{data:topProfes.map(x=>x[1]),backgroundColor:'#1F9FE0',borderColor:'#BA25D8',borderWidth:1.5,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{stepSize:1,font:{size:10}}},y:{ticks:{font:{size:10}}}}}});
     } else {
       wrapProf.innerHTML='<div style="text-align:center;padding:30px;color:var(--text-faint);font-size:13px">Aún no hay profesores registrados. Agrégalos en el campo \'Profesores a quienes se envía\' de cada convocatoria.</div>';
     }
@@ -1146,10 +1143,30 @@ function loadColWidths(){
 async function recargar(){
   await loadData();
   DATA.forEach(d=>{ if(d.estado && (d.estado.toUpperCase().includes('PROXIMA')||d.estado.includes('PRÓXIMA'))) d.estado='PRÓXIMA A ABRIR'; });
+  migrarPostulacion();
   renderMetrics(); renderResumen();
   const pane=document.querySelector('.pane.active');
   if(pane && pane.id==='pane-convocatorias'){ fillFilters(); renderTable(); }
   if(pane && pane.id==='pane-pipeline') renderPipeline();
+}
+
+
+function migrarPostulacion(){
+  const map={
+    'Sí':'Aprobada','Si':'Aprobada',
+    'No':'Identificada',
+    'Enviada a profes':'Enviada a profesores',
+    'Enviar profes':'Enviada a profesores',
+    'Enviar a todos':'Enviada a profesores',
+    'Sin respuesta de profes':'Sin respuesta de profesores',
+    'Para revisar':'En formulación',
+    'Ideación':'Identificada',
+    'Pendiente':'Identificada'
+  };
+  DATA.forEach(d=>{
+    if(map[d.postulacion]) d.postulacion=map[d.postulacion];
+    if(!d.postulacion||d.postulacion==='') d.postulacion='Identificada';
+  });
 }
 
 async function iniciar(){
@@ -1159,6 +1176,7 @@ async function iniciar(){
     if(d.estado && (d.estado.toUpperCase().includes('PROXIMA') || d.estado.includes('PRÓXIMA')))
       d.estado='PRÓXIMA A ABRIR';
   });
+  migrarPostulacion();
   renderMetrics();
   renderResumen();
 }
